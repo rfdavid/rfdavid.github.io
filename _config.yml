@@ -1,0 +1,17 @@
+title: rfdavid
+email: me@rfdavid.com
+description: >- # this means to ignore newlines until "baseurl:"
+ rfdavid | Machine Learning | Graph Neural Networks 
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
+twitter_username: ruifdavid
+github_username: rfdavid
+
+remote_theme: chesterhow/tale
+
+permalink: /:year-:month-:day/:title
+paginate: 5
+
+plugins:
+  - jekyll-paginate
+  - jekyll-remote-theme
