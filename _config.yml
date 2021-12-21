@@ -9,7 +9,8 @@ github_username: rfdavid
 
 remote_theme: chesterhow/tale
 
-permalink: /:year-:month-:day/:title
+# permalink: /:year-:month-:day/:title/
+permalink: /:title/
 paginate: 5
 
 plugins:
