@@ -1,0 +1,2 @@
+git filter-branch --subdirectory-filter _site/ -- --all
+git push --all origin
