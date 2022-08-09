@@ -1,0 +1,7 @@
+# Use lower case only for term
+
+- term: ridge regression
+  definition: Method to estimate the coefficients of multiple regression models where the independent variables are highly correlated.
+
+- term: parametric
+  definition: assume the data comes from a distribution. 

@@ -1,0 +1,6 @@
+{%- for glossary in site.data.glossary -%}
+{%- assign term = include.term | downcase -%}
+{%- if glossary.term == term -%}
+    <label class="tooltip">{{ include.term }}<input type="checkbox"><span>{{ glossary.definition }}</span></label>
+  {%- endif -%}
+{%- endfor -%}

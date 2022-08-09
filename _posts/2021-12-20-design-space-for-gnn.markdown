@@ -36,6 +36,8 @@ and learning configuration. All combined possibilities result in 314,928
 different designs.
 
 ![medium](/assets/images/gnn-design-space.png "GNN design space")
+_Figure 1: General design space divided into intra-layer, inter-layer and
+learning configuration. Image extracted from {% cite you2020design %}._
 
 **Intra-layer** design follows the sequence of the modules:
 
@@ -104,6 +106,7 @@ similarity.
 
 
 ![medium](/assets/images/task-transfer.png "Task similarity example")
+_Table 1: Image extracted from {% cite you2020design %}_
 
 Once introducing a new target task (ogbg-molhiv in the example), a task similarity 
 is calculated. Task A has a correlation of 0.47, and Task B has a negative
@@ -129,6 +132,7 @@ analyze whether batch normalization is generally helpful or not.
 The paper show a nice visualization using violin plot for the experiments.
 
 ![](/assets/images/design-space-results.png "GNN design space results")
+_Figure 3: Boxplot of the results. Image extracted from {% cite you2020design %}_
 
 Each plot represents the distribution of the rank. For example, the first graph
 is the distribution of the experiments for batch normalization. By evaluating

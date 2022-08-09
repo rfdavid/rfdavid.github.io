@@ -49,7 +49,6 @@
     text-align: center;
   }
 
-  // CSS for making emoji inline
   img.emoji {
     display: inline-block;
     left: 0;
@@ -65,5 +64,72 @@
 
   mjx-container * {
     line-height: 0;
+  }
+
+  .section-nav::before {
+    content: "Table of Contents";
+  }
+
+  .section-nav {
+    font-weight: bold;
+    color: #000;
+    background-color: #f5f5f5;
+    margin: 5px 0;
+    padding: 15px 35px;
+    border: 1px solid #e8e8e8;
+    border-radius: 3px;
+  }
+
+  .section-nav > li:first-child {
+    margin-top: 20px;
+  }
+
+  .section-nav a {
+    font-weight: normal;
+    color: $default-color ;
+    line-height: 30px;
+  }
+
+  .tooltip {
+    position: relative;
+    border-bottom: 1px dotted $default-color;
+  }
+
+  .tooltip span {
+    visibility: hidden;
+    width: 10em;
+    background-color: $default-color;
+    font-size: 12px;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 9;
+    top: -1em;
+    left:  100%;
+    margin-left:1em;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .tooltip span::after {
+    content: "";
+    position: absolute;
+    top: 1.5em;
+    right: 100%;
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent $default-color transparent transparent;
+  }
+
+  .tooltip input {
+    display:none;
+  }
+
+  .tooltip input:checked+span {
+    visibility: visible;
+    opacity: 1;
   }
 }
