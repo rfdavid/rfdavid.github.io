@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Paper review - Design Space for Graph Neural Networks" />
 <script type="application/ld+json">
-{"url":"/design-space-for-gnn/","headline":"Paper review - Design Space for Graph Neural Networks","dateModified":"2021-12-20T10:27:31-05:00","datePublished":"2021-12-20T10:27:31-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"/design-space-for-gnn/"},"author":{"@type":"Person","name":"Rui F. David"},"description":"Introduction","@type":"BlogPosting","@context":"https://schema.org"}</script>
+{"datePublished":"2021-12-20T10:27:31-05:00","dateModified":"2021-12-20T10:27:31-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"/design-space-for-gnn/"},"url":"/design-space-for-gnn/","author":{"@type":"Person","name":"Rui F. David"},"description":"Introduction","headline":"Paper review - Design Space for Graph Neural Networks","@type":"BlogPosting","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -108,7 +108,9 @@ many different tasks, presenting three key innovations:</p>
 and learning configuration. All combined possibilities result in 314,928
 different designs.</p>
 
-<p><img src="/assets/images/gnn-design-space.png" alt="medium" title="GNN design space" /></p>
+<p><img src="/assets/images/gnn-design-space.png" alt="medium" title="GNN design space" />
+<em>Figure 1: General design space divided into intra-layer, inter-layer and
+learning configuration. Image extracted from <a class="citation" href="#you2020design">(You et al., 2020)</a>.</em></p>
 
 <p><strong>Intra-layer</strong> design follows the sequence of the modules:</p>
 
@@ -219,7 +221,8 @@ performed better using max aggregation function. The question is if it’s
 possible to use the same configuration to a new similar task based on
 similarity.</p>
 
-<p><img src="/assets/images/task-transfer.png" alt="medium" title="Task similarity example" /></p>
+<p><img src="/assets/images/task-transfer.png" alt="medium" title="Task similarity example" />
+<em>Table 1: Image extracted from <a class="citation" href="#you2020design">(You et al., 2020)</a></em></p>
 
 <p>Once introducing a new target task (ogbg-molhiv in the example), a task similarity 
 is calculated. Task A has a correlation of 0.47, and Task B has a negative
@@ -244,7 +247,8 @@ analyze whether batch normalization is generally helpful or not.</p>
 
 <p>The paper show a nice visualization using violin plot for the experiments.</p>
 
-<p><img src="/assets/images/design-space-results.png" alt="" title="GNN design space results" /></p>
+<p><img src="/assets/images/design-space-results.png" alt="" title="GNN design space results" />
+<em>Figure 3: Boxplot of the results. Image extracted from <a class="citation" href="#you2020design">(You et al., 2020)</a></em></p>
 
 <p>Each plot represents the distribution of the rank. For example, the first graph
 is the distribution of the experiments for batch normalization. By evaluating
@@ -282,11 +286,12 @@ pre-processing layers or pos-processing layers.</li>
 
   <a href="#" class="top">Top</a>
 </div>
+
     </main>
 
     <footer>
   <span>
-    &copy; <time datetime="2021-12-21 10:34:40 -0500">2021</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+    &copy; <time datetime="2022-08-09 13:08:28 -0400">2022</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
   </span>
 </footer>
 

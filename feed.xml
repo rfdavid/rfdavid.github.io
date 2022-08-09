@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2021-12-21T10:34:40-05:00</updated><id>/feed.xml</id><title type="html">rfdavid</title><subtitle>AI | Machine Learning | Graph Neural Networks </subtitle><entry><title type="html">Paper review - Design Space for Graph Neural Networks</title><link href="/design-space-for-gnn/" rel="alternate" type="text/html" title="Paper review - Design Space for Graph Neural Networks" /><published>2021-12-20T10:27:31-05:00</published><updated>2021-12-20T10:27:31-05:00</updated><id>/design-space-for-gnn</id><content type="html" xml:base="/design-space-for-gnn/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2022-08-09T13:08:28-04:00</updated><id>/feed.xml</id><title type="html">rfdavid</title><subtitle>AI | Machine Learning | Graph Neural Networks </subtitle><entry><title type="html">Paper review - Design Space for Graph Neural Networks</title><link href="/design-space-for-gnn/" rel="alternate" type="text/html" title="Paper review - Design Space for Graph Neural Networks" /><published>2021-12-20T10:27:31-05:00</published><updated>2021-12-20T10:27:31-05:00</updated><id>/design-space-for-gnn</id><content type="html" xml:base="/design-space-for-gnn/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&quot;https://arxiv.org/pdf/2011.08843.pdf&quot;&gt;Design Space for Graph Neural Networks&lt;/a&gt; &lt;a class=&quot;citation&quot; href=&quot;#you2020design&quot;&gt;(You et al., 2020)&lt;/a&gt;
 was published on NeurIPS 2020. The authors are Jiaxuan You, Zhitao Ying and Jure Leskovec
@@ -26,7 +26,9 @@ many different tasks, presenting three key innovations:&lt;/p&gt;
 and learning configuration. All combined possibilities result in 314,928
 different designs.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/images/gnn-design-space.png&quot; alt=&quot;medium&quot; title=&quot;GNN design space&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/gnn-design-space.png&quot; alt=&quot;medium&quot; title=&quot;GNN design space&quot; /&gt;
+&lt;em&gt;Figure 1: General design space divided into intra-layer, inter-layer and
+learning configuration. Image extracted from &lt;a class=&quot;citation&quot; href=&quot;#you2020design&quot;&gt;(You et al., 2020)&lt;/a&gt;.&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;Intra-layer&lt;/strong&gt; design follows the sequence of the modules:&lt;/p&gt;
 
@@ -137,7 +139,8 @@ performed better using max aggregation function. The question is if it’s
 possible to use the same configuration to a new similar task based on
 similarity.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/images/task-transfer.png&quot; alt=&quot;medium&quot; title=&quot;Task similarity example&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/task-transfer.png&quot; alt=&quot;medium&quot; title=&quot;Task similarity example&quot; /&gt;
+&lt;em&gt;Table 1: Image extracted from &lt;a class=&quot;citation&quot; href=&quot;#you2020design&quot;&gt;(You et al., 2020)&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Once introducing a new target task (ogbg-molhiv in the example), a task similarity 
 is calculated. Task A has a correlation of 0.47, and Task B has a negative
@@ -162,7 +165,8 @@ analyze whether batch normalization is generally helpful or not.&lt;/p&gt;
 
 &lt;p&gt;The paper show a nice visualization using violin plot for the experiments.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/images/design-space-results.png&quot; alt=&quot;&quot; title=&quot;GNN design space results&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/design-space-results.png&quot; alt=&quot;&quot; title=&quot;GNN design space results&quot; /&gt;
+&lt;em&gt;Figure 3: Boxplot of the results. Image extracted from &lt;a class=&quot;citation&quot; href=&quot;#you2020design&quot;&gt;(You et al., 2020)&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Each plot represents the distribution of the rank. For example, the first graph
 is the distribution of the experiments for batch normalization. By evaluating
