@@ -5,3 +5,12 @@
 
 - term: parametric
   definition: assume the data comes from a distribution. 
+
+- term: convex
+  definition:  a continuous function whose value at the midpoint of every interval in its domain does not exceed the arithmetic mean of its values at the ends of the interval. Usually, a loss function is considered to be convex.
+
+- term: taylor approximation
+  definition: a function becomes "better" as n increases in the Taylor series.
+
+- term: lazy learner
+  definition: it doesn't learn a discriminative function from the training data, but only store the dataset.

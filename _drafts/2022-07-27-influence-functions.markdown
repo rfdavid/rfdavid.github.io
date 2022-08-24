@@ -56,47 +56,90 @@ try harder to fit that particular sample. Image by the author._
 
 ### Change in Parameters 
 
-First we need to understand how the parameters changes after perturbing a
-particular training point $$z$$ by an infinitesimal amount $$\epsilon$$,
-defined by $$\theta - \hat\theta$$ where $$\theta$$ is the original parameters
-for the full training data and $$\hat\theta$$ is the new set of parameters
-after upweighting:   
+The empirical risk minimizer to solve an optimization problem can be defined as
+the following:
 
-$$\hat\theta_{\epsilon,z} \overset{\mathrm{def}}{=}
-argmin_{\theta\in\Theta}\frac{1}{n}\sum_{i=1}^{n}L(z_i,\theta) + \epsilon L(z,\theta)$$
+$$
+\begin{equation}
+  \hat\theta = arg \; \underset{\theta}{min} \frac{1}{n} \sum_{i=1}^{n} \mathcal{L}(z_i, \theta)
+\end{equation}
+$$
+
+Where $$z_i$$ is each training point from a training sample.  First, we need to understand how 
+the parameters $$\hat\theta$$ changes after perturbing a particular training point $$z$$ by an infinitesimal 
+amount $$\epsilon$$, defined by $$\theta - \hat\theta$$ where $$\theta$$ is the original parameters
+for the full training data and $$\hat\theta$$ is the new set of parameters after upweighting:   
+
+$$
+\begin{equation}
+  \hat\theta_{\epsilon,z} = arg \; \underset{\theta}{min} \frac{1}{n}\sum_{i=1}^{n}\mathcal{L}(z_i,\theta) + \epsilon \mathcal{L}(z,\theta)
+\end{equation}
+$$
 
 As we want to measure the rate of change of the parameters after perturbing the
 point, the derivation made by {% cite cook1982influence %} yields to the following:
 
-$$ I_{up,params}(z) \overset{\mathrm{def}}{=} \frac{d\hat\theta_{\epsilon,z}}{d\epsilon} \bigg|_{\epsilon=0} = -H_{\hat\theta}^{-1}\nabla_{\theta} L(z,\hat\theta)  $$
+$$ 
+\begin{equation}
+  I(z) = \frac{d\hat\theta_{\epsilon,z}}{d\epsilon} \bigg|_{\epsilon=0} = -H_{\hat\theta}^{-1}\nabla_{\theta} \mathcal{L}(z,\hat\theta)
+\end{equation}
+$$
 
 Where $$H_{\hat\theta}$$ is the Hessian matrix and assumed to be positive
 definite (symmetric with all positive eigenvalues), which can be calculated by
-$$ \frac{1}{n}\sum_{i=1}^n \nabla_{\theta}^2 L(z_i,\hat\theta) $$.  
+$$ \frac{1}{n}\sum_{i=1}^n \nabla_{\theta}^2 \mathcal{L}(z_i,\hat\theta) $$.  
 
-**The equation $$ I_{up,params}(z) $$ gives the influence of a single training
-point z on the parameters $$\theta$$.** Therefore, when multiplying $$-\frac{1}{n} I_{up,params}(z)$$ 
-the result is the same as removing $$z$$ and re-training the model.
+**The equation $$ 3 $$ gives the influence of a single training
+point z on the parameters $$\theta$$.** When multiplying $$-\frac{1}{n} I(z)$$ 
+the result is similar as removing $$z$$ and re-training the model.
 
 ### Change in the Loss Function
 
-As we want to measure the change in the loss function with respect to
-infinitesimal perturbation $$\epsilon$$, applying chain rule gives the
-following equation that can be explained as **the impact of $$z$$ on $$z_{test}$$:**
+As we want to measure the change in the loss function for a particular testing
+point, applying chain rule gives the following equation:
 
-$$ \frac{d L(z_{test},\hat\theta_{\epsilon, z})}{d\epsilon} \bigg|_{\epsilon=0} = -\nabla_\theta L(z_{test},\hat\theta)^T H_{\hat\theta}^{-1} \nabla_\theta L(z,\hat\theta) $$
+$$ 
+\begin{equation}
+  I(z, z_{test}) =  \frac{d L(z_{test},\hat\theta_{\epsilon, z})}{d\epsilon} \bigg|_{\epsilon=0} = -\nabla_\theta \mathcal{L}(z_{test},\hat\theta)^T H_{\hat\theta}^{-1} \nabla_\theta \mathcal{L}(z,\hat\theta)
+\end{equation}
+$$
 
+$$ \frac{1}{n} I(z, z_{test}) $$ approximately measures **the impact of $$z$$ on $$z_{test}$$**.
+This is based on the assumption that the underlying loss function is strictly {% include def.html term="convex" %} in 
+the parameters $$\theta$$.
 
 ## Influence Functions on Groups
 
- The technique was first introduced in "The Influence Curve and Its Role in Robust Estimation" {% cite 10.2307/2285666 %}.
-{% cite pmlr-v70-koh17a %} brought this technique to machine learning to
-measure the impact of a particular data point on a prediction (ie: the impact
-of a specific image on a classifier).
+As previously seen, the influence functions measure the impact of a training point 
+in a single testing point.  They are based on first-order 
+{% include def.html term="Taylor approximation" %}, whereas is fairly accurate
+for small changes. In order to study the effect of large group of training
+points, {% cite NEURIPS2019_a78482ce %} analyses this phenomenum where
+influence functions can be used for some particular cases. It can be written as
+the sum of the influences of individual points in a group:
 
-Paper reference: {% cite JMLR:v18:16-491 %}
+$$ \sum_{i=1}^n I(z_i, z_{test}) = -\nabla_\theta \mathcal{L}(z_{test},\hat\theta)^T H_{\hat\theta}^{-1} \sum_{i=1}^n \nabla_\theta \mathcal{L}(z,\hat\theta)$$
 
-## How to Efficiently Calculate Influence Functions
+Given a group $$\mathcal{U}$$ and $$ I(\mathcal{U})^{(1)} $$ the first-order group
+influence, {% cite pmlr-v119-basu20b %} proposes second-order group influence
+function to capture informative cross-dependencies among samples:
+
+$$ I(\mathcal{U})^{2} =  I(\mathcal{U})^{(1)} + I(\mathcal{U})^{'} $$
+
+
+## The Calculation Bottleneck
+
+Computing the inverse hessian is quite expensive, infeasible for a network with 
+lots of parameters. In numpy, it can be calculated using  `numpy.linalg.inv`.
+As a aside note, numpy is mostly written in c and the high level functions are
+python bindings. Nevertheless, it is still an expensive function. In the
+pytorch framework, you can compute the hessians using `torch.autograd.functional.hessian` 
+and then inversing it with `torch.linalg.inv`.  In spite of that, there are other 
+techniques to calculate the influence function.
+
+
+
+
 
 ### Conjugate Gradients
 
@@ -104,13 +147,27 @@ Related paper: {% cite 10.5555/3104322.3104416 %}
 
 ### Linear Time Stochastic Second-Order Algorithm (LiSSA)
 
+The main idea of LiSSa {% cite JMLR:v18:16-491 %} is to use Taylor expansion to 
+construct a natural estimator of the inverse Hessian.
+
 ### FastIF
+
+In order to improve the scalability and computational cost, FastIF present a
+set of modifications to improve the runtime. It uses k-neareast neighbors to
+narrow the search space down, which can be inexpensive for this context since
+i k-nn is a {% include def.html term="lazy learner" %}) algorithm.
 
 ## Applications
 
 ### Explainability
 
 ### Adversarial Attacks
+
+Real-world data is noisy and it can be problematic for machine learning.
+Adversarial machine learning methods are methods used to feed a model with
+deceptive input, changing the predictions of a classifier. Influence functions
+can help by identifying how to modify a training point to most increase the
+loss in a target point.
 
 ### Debugging
 

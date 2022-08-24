@@ -1,2 +1,4 @@
+# Git filter branch
 git filter-branch --subdirectory-filter _site/ -- --all
 git push --all origin
+# For now, just copy (source)/_site to /tmp and then /tmp/_site to (main)/*
