@@ -175,6 +175,24 @@ loss in a target point.
 
 ## The Problem with Influence Functions
 
+In some particular settings, influence functions can have a significant loss in
+information quality. It is known to work with convex loss functions, but for
+non-convex setups the estimations can not work as expected. The work
+'Influence Functions in Deep Learning are Fragile' {% cite basu2021influence
+%} examines the conditions where influence estimation can be applied to deep
+networks through vast experimentation. In short, there are a few obstacles:
+
+* The estimation in deeper architectures are erroneous, possibly due to poor
+  inverse hessian estimation. Weight-decay regularization can help.
+* Wide networks perform poorly. When increasing the width of a network, the
+  correlation between the true difference in the loss and the influence
+  function decreases substantially.
+* Scale influence functions is challeging. ImageNet contains 1.2 millions
+  images in the training set, which is still prohibitive to re-train leaving
+  one out for each example.  
+  
+
+
 ## Libraries
 
 There are several implementations available in Python with PyTorch and
