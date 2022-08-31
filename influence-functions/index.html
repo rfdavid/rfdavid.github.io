@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Influence Functions in Machine Learning | rfdavid</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="Influence Functions in Machine Learning" />
+<meta name="author" content="Rui F. David" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction" />
+<meta property="og:description" content="Introduction" />
+<link rel="canonical" href="/influence-functions/" />
+<meta property="og:url" content="/influence-functions/" />
+<meta property="og:site_name" content="rfdavid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-08-31T09:00:00-04:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Influence Functions in Machine Learning" />
+<script type="application/ld+json">
+{"datePublished":"2022-08-31T09:00:00-04:00","dateModified":"2022-08-31T09:00:00-04:00","mainEntityOfPage":{"@type":"WebPage","@id":"/influence-functions/"},"url":"/influence-functions/","author":{"@type":"Person","name":"Rui F. David"},"description":"Introduction","headline":"Influence Functions in Machine Learning","@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+
+  <!-- RSS -->
+  <link type="application/atom+xml" rel="alternate" href="/feed.xml" title="rfdavid" />
+
+  <!-- Google Analytics-->
+  
+
+  <!-- Mathjax -->
+  
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        tags: 'ams'
+      }
+    }
+  </script>
+  
+</head>
+
+
+  <body>
+
+    <nav class="nav">
+  <div class="nav-container">
+    <a href="/">
+      <h2 class="nav-title">rfdavid</h2>
+    </a>
+    <ul>
+      <li><a href="/posts/">Posts</a></li>
+    </ul>
+  </div>
+</nav>
+
+
+    <main>
+      <div class="post">
+  <div class="post-info">
+    <span>Written by</span>
+    
+        Rui F. David
+    
+
+    
+      <br>
+      <span>on&nbsp;</span><time datetime="2022-08-31 09:00:00 -0400">August 31, 2022</time>
+    
+  </div>
+
+  <h1 class="post-title">Influence Functions in Machine Learning</h1>
+  <div class="post-line"></div>
+
+  <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#introduction">Introduction</a></li>
+<li class="toc-entry toc-h2"><a href="#robust-statistics">Robust Statistics</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#influence-functions">Influence Functions</a></li>
+<li class="toc-entry toc-h3"><a href="#influence-functions-in-machine-learning">Influence Functions in Machine Learning</a></li>
+<li class="toc-entry toc-h3"><a href="#change-in-parameters">Change in Parameters</a></li>
+<li class="toc-entry toc-h3"><a href="#change-in-the-loss-function">Change in the Loss Function</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#influence-functions-on-groups">Influence Functions on Groups</a></li>
+<li class="toc-entry toc-h2"><a href="#the-calculation-bottleneck">The Calculation Bottleneck</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#conjugate-gradients">Conjugate Gradients</a></li>
+<li class="toc-entry toc-h3"><a href="#linear-time-stochastic-second-order-algorithm-lissa">Linear Time Stochastic Second-Order Algorithm (LiSSA)</a></li>
+<li class="toc-entry toc-h3"><a href="#fastif">FastIF</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#the-problem-with-influence-functions">The Problem with Influence Functions</a></li>
+<li class="toc-entry toc-h2"><a href="#libraries">Libraries</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#other-implementations">Other implementations</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#applications">Applications</a></li>
+<li class="toc-entry toc-h2"><a href="#conclusion">Conclusion</a></li>
+<li class="toc-entry toc-h2"><a href="#references">References</a></li>
+</ul><h2 id="introduction">
+<a class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h2>
+
+<p>With the increasing complexity of machine learning models, the generated
+predictions are not easily interpretable by humans and are usually treated as black-box
+models. To address this issue, a rising field of explainability try to understand 
+why those models make certain predictions. In recent years, the work by <a class="citation" href="#pmlr-v70-koh17a">(Koh &amp; Liang, 2017)</a> has attracted a lot of attention in many fields,
+using the idea of influence functions <a class="citation" href="#10.2307/2285666">(Hampel, 1974)</a> to identify
+the most responsible training points for a given prediction.</p>
+
+<h2 id="robust-statistics">
+<a class="anchor" href="#robust-statistics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Robust Statistics</h2>
+
+<p>Statistical methods rely explicitly or implicitly on assumptions based on
+the data analysis and the problem stated. The assumption usually concerns the
+probability distribution of the dataset. The most widely used framework makes
+the assumption that the observed data have a normal (Gaussian) distribution, 
+and this <em>classical</em> statistical method has been used for regression, analysis of
+variance and multivariate analysis.  However, real-life data is noisy and contain 
+atypical observations, called outliers. Those observations deviate from the
+general pattern of data, and classical estimates such as sample mean and sample
+variance can be highly adversely influenced. This can result in a bad fit of data.
+Robust statistics provide measures of robustness to provide a good fit for data 
+containing outliers <a class="citation" href="#maronna2006robust">(Maronna et al., 2006)</a>.</p>
+
+<h3 id="influence-functions">
+<a class="anchor" href="#influence-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Influence Functions</h3>
+
+<p>The Influence Functions (IF) was first introduced in “The Influence Curve and Its Role in
+Robust Estimation” <a class="citation" href="#10.2307/2285666">(Hampel, 1974)</a>, and measures the impact of an infinitesimal perturbation on
+an estimator. The very interesting work by <a class="citation" href="#pmlr-v70-koh17a">(Koh &amp; Liang, 2017)</a> brought
+this methodology into machine learning.</p>
+
+<h3 id="influence-functions-in-machine-learning">
+<a class="anchor" href="#influence-functions-in-machine-learning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Influence Functions in Machine Learning</h3>
+
+<p>Consider an image classification task where the goal is to predict the label for
+a given image. We want to measure the impact of a particular training image on
+a testing image. A naive approach is to remove the image and retrain the model.
+However, this approach is prohibitively expensive. To overcome this problem, influence
+function upweight that particular point by an infinitesimal amount and measure
+the impact in the loss function without having to train the model.</p>
+
+<p><img src="/assets/images/upweight-a-training-point.jpg" alt="medium" title="Upweighting a training point">
+<em>Figure 1: The fish image is upweighted by an infinitesimal amount so the model
+try harder to fit that particular sample. Image by the author.</em></p>
+
+<h3 id="change-in-parameters">
+<a class="anchor" href="#change-in-parameters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Change in Parameters</h3>
+
+<p>The empirical risk minimizer to solve an optimization problem can be defined as
+the following:</p>
+
+\[\begin{equation}
+  \hat\theta = arg \; \underset{\theta}{min} \frac{1}{n} \sum_{i=1}^{n} \mathcal{L}(z_i, \theta)
+\end{equation}\]
+
+<p>Where \(z_i\) is each training point from a training sample.  First, we need to understand how 
+the parameters \(\hat\theta\) change after perturbing a particular training point \(z\) by an infinitesimal 
+amount \(\epsilon\), defined by \(\theta - \hat\theta\) where \(\theta\) is the original parameters
+for the full training data and \(\hat\theta\) is the new set of parameters after upweighting:</p>
+
+\[\begin{equation}
+  \hat\theta_{\epsilon,z} = arg \; \underset{\theta}{min} \frac{1}{n}\sum_{i=1}^{n}\mathcal{L}(z_i,\theta) + \epsilon \mathcal{L}(z,\theta)
+\end{equation}\]
+
+<p>As we want to measure the rate of change of the parameters after perturbing the
+point, the derivation made by <a class="citation" href="#cook1982influence">(Cook &amp; Weisberg, 1982)</a> yields the following:</p>
+
+\[\begin{equation}
+  I(z) = \frac{d\hat\theta_{\epsilon,z}}{d\epsilon} \bigg|_{\epsilon=0} = -H_{\hat\theta}^{-1}\nabla_{\theta} \mathcal{L}(z,\hat\theta)
+\end{equation}\]
+
+<p>Where \(H_{\hat\theta}\) is the Hessian matrix and assumed to be positive
+definite (symmetric with all positive eigenvalues), which can be calculated by
+\(\frac{1}{n}\sum_{i=1}^n \nabla_{\theta}^2 \mathcal{L}(z_i,\hat\theta)\).</p>
+
+<p><strong>The equation \(3\) gives the influence of a single training
+point z on the parameters \(\theta\).</strong> When multiplying \(-\frac{1}{n} I(z)\) 
+the result is similar as removing \(z\) and re-training the model.</p>
+
+<h3 id="change-in-the-loss-function">
+<a class="anchor" href="#change-in-the-loss-function" aria-hidden="true"><span class="octicon octicon-link"></span></a>Change in the Loss Function</h3>
+
+<p>As we want to measure the change in the loss function for a particular testing
+point, applying chain rule gives the following equation:</p>
+
+\[\begin{equation}
+  I(z, z_{test}) =  \frac{d L(z_{test},\hat\theta_{\epsilon, z})}{d\epsilon} \bigg|_{\epsilon=0} = -\nabla_\theta \mathcal{L}(z_{test},\hat\theta)^T H_{\hat\theta}^{-1} \nabla_\theta \mathcal{L}(z,\hat\theta)
+\end{equation}\]
+
+<p>\(\frac{1}{n} I(z, z_{test})\) approximately measures <strong>the impact of \(z\) on \(z_{test}\)</strong>.
+This is based on the assumption that the underlying loss function is strictly <label class="tooltip">convex<input type="checkbox"><span>a continuous function whose value at the midpoint of every interval in its domain does not exceed the arithmetic mean of its values at the ends of the interval. Usually, a loss function is considered to be convex.</span></label> in 
+the parameters \(\theta\). Some loss functions are not differentiable 
+(<label class="tooltip">hinge loss<input type="checkbox"><span></span></label>), so in this case, one of the contributions of 
+Koh’s work is to approximate to a differentiable region right at the margin.</p>
+
+<h2 id="influence-functions-on-groups">
+<a class="anchor" href="#influence-functions-on-groups" aria-hidden="true"><span class="octicon octicon-link"></span></a>Influence Functions on Groups</h2>
+
+<p>As previously seen, the influence functions measure the impact of a training point 
+in a single testing point.  They are based on first-order 
+<label class="tooltip">Taylor approximation<input type="checkbox"><span>a function becomes “better” as n increases in the Taylor series.</span></label>, which is fairly accurate
+for small changes. In order to study the effect of a large group of training
+points, <a class="citation" href="#NEURIPS2019_a78482ce">(Koh et al., 2019)</a> analyze this phenomenon where
+influence functions can be used for some particular cases. It can be written as
+the sum of the influences of individual points in a group:</p>
+
+\[\sum_{i=1}^n I(z_i, z_{test}) = -\nabla_\theta \mathcal{L}(z_{test},\hat\theta)^T H_{\hat\theta}^{-1} \sum_{i=1}^n \nabla_\theta \mathcal{L}(z,\hat\theta)\]
+
+<p>Given a group \(\mathcal{U}\) and \(I(\mathcal{U})^{(1)}\) the first-order group
+influence, <a class="citation" href="#pmlr-v119-basu20b">(Basu et al., 2020)</a> proposes second-order group influence
+function to capture informative cross-dependencies among samples:</p>
+
+\[I(\mathcal{U})^{2} =  I(\mathcal{U})^{(1)} + I(\mathcal{U})^{'}\]
+
+<p>Hence, first-order group influence function \(I(\mathcal{U})^{(1)}\) can be
+defined as:</p>
+
+\[I(\mathcal{U})^{(1)} = \frac{\partial \theta_{\mathcal{U}}^{\epsilon}}{\partial \epsilon} \bigg|_{\epsilon=0}\]
+
+<p>And the second-order group influence \(I(\mathcal{U})^{'}\) as:</p>
+
+\[I(\mathcal{U})^{(1)} = \frac{\partial^2 \theta_{\mathcal{U}}^{\epsilon}}{\partial \epsilon^2} \bigg|_{\epsilon=0}\]
+
+<p>This technique was empirically proven that can be used to improve the selection
+of the most influential group for a test sample across different group sizes
+and types. The idea is to capture more information when the changes to the
+underlying model are relatively large.</p>
+
+<h2 id="the-calculation-bottleneck">
+<a class="anchor" href="#the-calculation-bottleneck" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Calculation Bottleneck</h2>
+
+<p>Computing the inverse hessian is quite expensive and infeasible for a network with 
+lots of parameters. In numpy, it can be calculated using  <code class="language-plaintext highlighter-rouge">numpy.linalg.inv</code>.
+As a side note, numpy is mostly written in c and the high-level functions are
+python bindings. Nevertheless, it is still an expensive function. In the
+PyTorch framework, you can compute the Hessians using <code class="language-plaintext highlighter-rouge">torch.autograd.functional.hessian</code> 
+and then inversing it with <code class="language-plaintext highlighter-rouge">torch.linalg.inv</code>.  In spite of that, second-order optimization
+techniques can efficiently approximate the calculation.</p>
+
+<h3 id="conjugate-gradients">
+<a class="anchor" href="#conjugate-gradients" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conjugate Gradients</h3>
+
+<p>Conjugate gradient <a class="citation" href="#Shewchuk94">(Shewchuk, 1994)</a> is an iterative method for solving large systems of linear
+equations, and it is effective to solve systems in the form of \(Ax = b\).
+In <a class="citation" href="#10.5555/3104322.3104416">(Martens, 2010)</a>, the hessian is calculated by
+approximation using second-order optimization technique. This method does not
+invert the hessian directly but calculate the inverse hessian product:</p>
+
+\[H^{-1} v = arg min_{t}(t^T Ht - v^Tt)\]
+
+<h3 id="linear-time-stochastic-second-order-algorithm-lissa">
+<a class="anchor" href="#linear-time-stochastic-second-order-algorithm-lissa" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linear Time Stochastic Second-Order Algorithm (LiSSA)</h3>
+
+<p>The main idea of LiSSA <a class="citation" href="#JMLR:v18:16-491">(Agarwal et al., 2017)</a> is to use Taylor expansion (<a href="https://en.wikipedia.org/wiki/Neumann_series">Neumann series</a>) to 
+construct a natural estimator of the inverse Hessian:</p>
+
+\[H^{-1} = \sum^{\infty}_{i=0} (I - H)^i\]
+
+<p>Rewriting this equation recursively, as \(\lim_{j \to \infty} H_{j}^{-1} = H^{-1}\), we have the following:</p>
+
+\[H_{j}^{-1} = \sum^{j}_{i=0} (I - H)^i = I + (I - H) H^{-1}_{j-1}\]
+
+<h3 id="fastif">
+<a class="anchor" href="#fastif" aria-hidden="true"><span class="octicon octicon-link"></span></a>FastIF</h3>
+
+<p>In order to improve the scalability and computational cost, FastIF <a class="citation" href="#guo-etal-2021-fastif">(Guo et al., 2021)</a> present a set of modifications to improve the runtime. 
+The work uses k-neareast neighbours to narrow the search space down, 
+which can be inexpensive for this context since i k-nn is a <label class="tooltip">lazy learner<input type="checkbox"><span>it doesn’t learn a discriminative function from the training data, but only store the dataset.</span></label>) algorithm.</p>
+
+<h2 id="the-problem-with-influence-functions">
+<a class="anchor" href="#the-problem-with-influence-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Problem with Influence Functions</h2>
+
+<p>Influence functions are an approximation and do not always produce correct
+values. In some particular settings, influence functions can have a significant loss in
+information quality. It is known to work with convex loss functions, but for
+non-convex setups, the estimations can not work as expected. The work
+‘Influence Functions in Deep Learning are Fragile’ <a class="citation" href="#basu2021influence">(Basu et al., 2021)</a> examines the conditions where influence estimation can be applied to deep
+networks through vast experimentation. In short, there are a few obstacles:</p>
+
+<ul>
+  <li>The estimation in deeper architectures is erroneous, possibly due to poor
+inverse hessian estimation. Weight-decay regularization can help.</li>
+  <li>Wide networks perform poorly. When increasing the width of a network, the
+correlation between the true difference in the loss and the influence
+function decreases substantially.</li>
+  <li>Scale influence functions is challenging. ImageNet contains 1.2 million
+images in the training set, being difficult to evaluate if influence
+functions are effective since it is computationally prohibitive to re-train the 
+model multiple times, leaving each training point out of the training.</li>
+</ul>
+
+<h2 id="libraries">
+<a class="anchor" href="#libraries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Libraries</h2>
+
+<p>There are several implementations available in Python with PyTorch and
+TensorFlow. A few others are built on R and Matlab.</p>
+
+<p><a href="https://github.com/kohpangwei/influence-release">Influence Functions</a><br>
+The official version of <a class="citation" href="#pmlr-v70-koh17a">(Koh &amp; Liang, 2017)</a> built on TensorFlow.</p>
+
+<p><a href="https://github.com/nimarb/pytorch_influence_functions">Influence Functions for PyTorch</a><br>
+PyTorch implementation. It uses stochastic estimation to calculate the
+influence.</p>
+
+<p><a href="https://github.com/alstonlo/torch-influence">Torch Influence</a><br>
+A recent implementation (Jul/2022) of influence functions on PyTorch, providing
+three different ways to calculate the inverse hessian: direct computation and
+inversion with torch.autograd, truncated conjugate gradients and LiSSA.</p>
+
+<p><a href="https://github.com/salesforce/fast-influence-functions">Fast Influence Functions</a><br>
+A modified influence function computation using k-Nearest Neighbors (kNN),
+implemented in PyTorch.</p>
+
+<h3 id="other-implementations">
+<a class="anchor" href="#other-implementations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Other implementations</h3>
+
+<p><a href="https://github.com/nayopu/influence_function_with_lissa">Influence Function with LiSSA</a><br>
+A simple implementation with LiSSA on TensorFlow.</p>
+
+<p><a href="https://github.com/jrepifano/influence-pytorch">Influence Pytorch</a>
+One-file code with the implementation for a random classification problem.</p>
+
+<p><a href="https://github.com/zedyang/46927-Project">IF notebook</a><br>
+Python notebook with IF applied to other algorithms (Trees, <label class="tooltip">Ridge Regression<input type="checkbox"><span>Method to estimate the coefficients of multiple regression models where the independent variables are highly correlated.</span></label>).</p>
+
+<p><a href="https://github.com/Benqalu/influence-functions-pytorch">Influence Functions Pytorch</a><br>
+Another implementation of influence functions.</p>
+
+<h2 id="applications">
+<a class="anchor" href="#applications" aria-hidden="true"><span class="octicon octicon-link"></span></a>Applications</h2>
+
+<ul>
+  <li>
+<strong>Explainability:</strong> This is the most common use we explored so far, measuring
+the impact of a training point to explain the impact in a given testing point.</li>
+  <li>
+<strong>Adversarial Attacks:</strong> Real-world data is noisy, and it can be problematic for machine learning.
+Adversarial machine learning methods are methods used to feed a model with
+deceptive input, changing the predictions of a classifier. Influence functions
+can help by identifying how to modify a training point to increase the
+loss in a target point.</li>
+  <li>
+<strong>Label mismatch:</strong> Toy datasets are pretty good for experimentation, but
+real data might contain many mislabeled examples. The idea is to calculate
+the influence of a particular training point \(I(z_{i}, z_{i})\) if that point was removed. 
+Email spam is a good example since it usually uses the user’s input in
+classifying whether an email is spam or not.</li>
+</ul>
+
+<h2 id="conclusion">
+<a class="anchor" href="#conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion</h2>
+
+<p>The very interesting work from <a class="citation" href="#pmlr-v70-koh17a">(Koh &amp; Liang, 2017)</a> brought influence
+functions to the context of machine learning. In principle, this technique was
+introduced more than 40 years ago by <a class="citation" href="#10.2307/2285666">(Hampel, 1974)</a>. 
+One of the main contributions is how to apply to non-differentiable loss functions (i.e.
+hinge loss). In addition to that, the paper uses other existing ideas to
+overcome the computation issue, such as conjugate gradients and LiSSA
+algorithm. Subsequent work studied influence functions on groups (<a class="citation" href="#NEURIPS2019_a78482ce">(Koh et al., 2019)</a> 
+and <a class="citation" href="#pmlr-v119-basu20b">(Basu et al., 2020)</a>). The last used second-order influence
+functions to capture hidden information when the group size is relatively large.
+I believe this is a powerful technique that will continue to derive new ideas in
+many different areas. One example is in pruning, where a single-shot pruning
+technique was based on sensitivity connections <a class="citation" href="#lee2018snip">(Lee et al., 2019)</a>, exploring
+the idea of perturbing weights in a network. Another idea is in the area of
+graphs, a popular framework JK Networks <a class="citation" href="#JKNets">(Xu et al., 2018)</a> uses perturbation
+analysis to measure what is the impact of a change in one node embedding in
+another node embedding.</p>
+
+<h2 id="references">
+<a class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
+
+<ol class="bibliography">
+<li><span id="pmlr-v70-koh17a">Koh, P. W., &amp; Liang, P. (2017). Understanding Black-box Predictions via Influence Functions. In D. Precup &amp; Y. W. Teh (Eds.), <i>Proceedings of the 34th International Conference on Machine Learning</i> (Vol. 70, pp. 1885–1894). PMLR.</span></li>
+<li><span id="10.2307/2285666">Hampel, F. R. (1974). The Influence Curve and Its Role in Robust Estimation. <i>Journal of the American Statistical Association</i>, <i>69</i>(346), 383–393.</span></li>
+<li><span id="maronna2006robust">Maronna, R. A., Martin, D. R., &amp; Yohai, V. J. (2006). <i>Robust Statistics: Theory and Methods</i>. Wiley.</span></li>
+<li><span id="cook1982influence">Cook, R. D., &amp; Weisberg, S. (1982). <i>Residuals and Influence in Regression </i>. New York: Chapman and Hall.</span></li>
+<li><span id="NEURIPS2019_a78482ce">Koh, P. W. W., Ang, K.-S., Teo, H., &amp; Liang, P. S. (2019). On the Accuracy of Influence Functions for Measuring Group Effects. In H. Wallach, H. Larochelle, A. Beygelzimer, F. d’ Alché-Buc, E. Fox, &amp; R. Garnett (Eds.), <i>Advances in Neural Information Processing Systems</i> (Vol. 32). Curran Associates, Inc.</span></li>
+<li><span id="pmlr-v119-basu20b">Basu, S., You, X., &amp; Feizi, S. (2020). On Second-Order Group Influence Functions for Black-Box Predictions. In H. D. III &amp; A. Singh (Eds.), <i>Proceedings of the 37th International Conference on Machine Learning</i> (Vol. 119, pp. 715–724). PMLR.</span></li>
+<li><span id="Shewchuk94">Shewchuk, J. R. (1994). <i>An Introduction to the Conjugate Gradient Method Without the Agonizing Pain</i>.</span></li>
+<li><span id="10.5555/3104322.3104416">Martens, J. (2010). Deep Learning via Hessian-Free Optimization. <i>Proceedings of the 27th International Conference on International Conference on Machine Learning</i>, 735–742.</span></li>
+<li><span id="JMLR:v18:16-491">Agarwal, N., Bullins, B., &amp; Hazan, E. (2017). Second-Order Stochastic Optimization for Machine Learning in Linear Time. <i>Journal of Machine Learning Research</i>, <i>18</i>(116), 1–40.</span></li>
+<li><span id="guo-etal-2021-fastif">Guo, H., Rajani, N., Hase, P., Bansal, M., &amp; Xiong, C. (2021). FastIF: Scalable Influence Functions for Efficient Model Interpretation and Debugging. <i>Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing</i>, 10333–10350.</span></li>
+<li><span id="basu2021influence">Basu, S., Pope, P., &amp; Feizi, S. (2021). Influence Functions in Deep Learning Are Fragile. <i>International Conference on Learning Representations</i>.</span></li>
+<li><span id="lee2018snip">Lee, N., Ajanthan, T., &amp; Torr, P. (2019). SNIP: SINGLE-SHOT NETWORK PRUNING BASED ON CONNECTION SENSITIVITY. <i>International Conference on Learning Representations</i>.</span></li>
+<li><span id="JKNets">Xu, K., Li, C., Tian, Y., Sonobe, T., Kawarabayashi, K.-ichi, &amp; Jegelka, S. (2018). Representation Learning on Graphs with Jumping Knowledge Networks. <i>ICML</i>, 5449–5458.</span></li>
+</ol>
+
+</div>
+
+
+
+<div class="pagination">
+  
+  
+    <a href="/design-space-for-gnn/" class="right arrow">&#8594;</a>
+  
+
+  <a href="#" class="top">Top</a>
+</div>
+
+    </main>
+
+    <footer>
+  <span>
+    &copy; <time datetime="2022-08-31 11:49:32 -0400">2022</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+  </span>
+</footer>
+
+  </body>
+</html>
