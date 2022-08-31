@@ -2,7 +2,7 @@
 layout: post
 author: Rui F. David
 title:  "Influence Functions in Machine Learning"
-date:   2022-07-27 09:00:00 -0400
+date:   2022-08-31 09:00:00 -0400
 usemathjax: true
 toc: true
 categories: paper
@@ -10,26 +10,26 @@ categories: paper
 
 ## Introduction
 
-With the increasing complexity of the machine learning models, the generated
+With the increasing complexity of machine learning models, the generated
 predictions are not easily interpretable by humans and are usually treated as black-box
 models. To address this issue, a rising field of explainability try to understand 
 why those models make certain predictions. In recent years, the work by {% cite
-pmlr-v70-koh17a %} has attracted a lot of attention into many fields,
+pmlr-v70-koh17a %} has attracted a lot of attention in many fields,
 using the idea of influence functions {% cite 10.2307/2285666 %} to identify
 the most responsible training points for a given prediction.
 
 ## Robust Statistics 
 
-Statistical methods relies explicitely or implicitely on assumptions based on
-the data analysis and the problem stated. The assumption usually concern the
-probabiliy distribution of the dataset. The most widely framework used makes
+Statistical methods rely explicitly or implicitly on assumptions based on
+the data analysis and the problem stated. The assumption usually concerns the
+probability distribution of the dataset. The most widely used framework makes
 the assumption that the observed data have a normal (Gaussian) distribution, 
 and this *classical* statistical method has been used for regression, analysis of
 variance and multivariate analysis.  However, real-life data is noisy and contain 
 atypical observations, called outliers. Those observations deviate from the
 general pattern of data, and classical estimates such as sample mean and sample
-varianve can be highly adversely influenced. This can result in a bad fit of data.
-Robust statistics provides measures of robustness to provide a good fit for data 
+variance can be highly adversely influenced. This can result in a bad fit of data.
+Robust statistics provide measures of robustness to provide a good fit for data 
 containing outliers {% cite maronna2006robust %}.
 
 
@@ -42,12 +42,12 @@ this methodology into machine learning.
 
 ### Influence Functions in Machine Learning
 
-Consider a image classification task where the goal is to predict the label for
+Consider an image classification task where the goal is to predict the label for
 a given image. We want to measure the impact of a particular training image on
 a testing image. A naive approach is to remove the image and retrain the model.
 However, this approach is prohibitively expensive. To overcome this problem, influence
 function upweight that particular point by an infinitesimal amount and measure
-the impact in the loss function, without having to train the model.
+the impact in the loss function without having to train the model.
 
 
 ![medium](/assets/images/upweight-a-training-point.jpg "Upweighting a training point")
@@ -66,7 +66,7 @@ $$
 $$
 
 Where $$z_i$$ is each training point from a training sample.  First, we need to understand how 
-the parameters $$\hat\theta$$ changes after perturbing a particular training point $$z$$ by an infinitesimal 
+the parameters $$\hat\theta$$ change after perturbing a particular training point $$z$$ by an infinitesimal 
 amount $$\epsilon$$, defined by $$\theta - \hat\theta$$ where $$\theta$$ is the original parameters
 for the full training data and $$\hat\theta$$ is the new set of parameters after upweighting:   
 
@@ -77,7 +77,7 @@ $$
 $$
 
 As we want to measure the rate of change of the parameters after perturbing the
-point, the derivation made by {% cite cook1982influence %} yields to the following:
+point, the derivation made by {% cite cook1982influence %} yields the following:
 
 $$ 
 \begin{equation}
@@ -106,15 +106,17 @@ $$
 
 $$ \frac{1}{n} I(z, z_{test}) $$ approximately measures **the impact of $$z$$ on $$z_{test}$$**.
 This is based on the assumption that the underlying loss function is strictly {% include def.html term="convex" %} in 
-the parameters $$\theta$$.
+the parameters $$\theta$$. Some loss functions are not differentiable 
+({% include def.html term="hinge loss" %}), so in this case, one of the contributions of 
+Koh's work is to approximate to a differentiable region right at the margin.
 
 ## Influence Functions on Groups
 
 As previously seen, the influence functions measure the impact of a training point 
 in a single testing point.  They are based on first-order 
-{% include def.html term="Taylor approximation" %}, whereas is fairly accurate
-for small changes. In order to study the effect of large group of training
-points, {% cite NEURIPS2019_a78482ce %} analyses this phenomenum where
+{% include def.html term="Taylor approximation" %}, which is fairly accurate
+for small changes. In order to study the effect of a large group of training
+points, {% cite NEURIPS2019_a78482ce %} analyze this phenomenon where
 influence functions can be used for some particular cases. It can be written as
 the sum of the influences of individual points in a group:
 
@@ -126,72 +128,80 @@ function to capture informative cross-dependencies among samples:
 
 $$ I(\mathcal{U})^{2} =  I(\mathcal{U})^{(1)} + I(\mathcal{U})^{'} $$
 
+Hence, first-order group influence function $$I(\mathcal{U})^{(1)}$$ can be
+defined as:
+
+$$ I(\mathcal{U})^{(1)} = \frac{\partial \theta_{\mathcal{U}}^{\epsilon}}{\partial \epsilon} \bigg|_{\epsilon=0} $$
+
+And the second-order group influence $$I(\mathcal{U})^{'}$$ as:
+
+$$ I(\mathcal{U})^{(1)} = \frac{\partial^2 \theta_{\mathcal{U}}^{\epsilon}}{\partial \epsilon^2} \bigg|_{\epsilon=0} $$
+
+This technique was empirically proven that can be used to improve the selection
+of the most influential group for a test sample across different group sizes
+and types. The idea is to capture more information when the changes to the
+underlying model are relatively large.
 
 ## The Calculation Bottleneck
 
-Computing the inverse hessian is quite expensive, infeasible for a network with 
+Computing the inverse hessian is quite expensive and infeasible for a network with 
 lots of parameters. In numpy, it can be calculated using  `numpy.linalg.inv`.
-As a aside note, numpy is mostly written in c and the high level functions are
+As a side note, numpy is mostly written in c and the high-level functions are
 python bindings. Nevertheless, it is still an expensive function. In the
-pytorch framework, you can compute the hessians using `torch.autograd.functional.hessian` 
-and then inversing it with `torch.linalg.inv`.  In spite of that, there are other 
-techniques to calculate the influence function.
-
-
-
-
+PyTorch framework, you can compute the Hessians using `torch.autograd.functional.hessian` 
+and then inversing it with `torch.linalg.inv`.  In spite of that, second-order optimization
+techniques can efficiently approximate the calculation.
 
 ### Conjugate Gradients
 
-Related paper: {% cite 10.5555/3104322.3104416 %}
+Conjugate gradient {% cite Shewchuk94 %} is an iterative method for solving large systems of linear
+equations, and it is effective to solve systems in the form of $$ Ax = b $$.
+In {% cite 10.5555/3104322.3104416 %}, the hessian is calculated by
+approximation using second-order optimization technique. This method does not
+invert the hessian directly but calculate the inverse hessian product:
+
+$$ H^{-1} v = arg min_{t}(t^T Ht - v^Tt) $$
 
 ### Linear Time Stochastic Second-Order Algorithm (LiSSA)
 
-The main idea of LiSSa {% cite JMLR:v18:16-491 %} is to use Taylor expansion to 
-construct a natural estimator of the inverse Hessian.
+The main idea of LiSSA {% cite JMLR:v18:16-491 %} is to use Taylor expansion ([Neumann series](https://en.wikipedia.org/wiki/Neumann_series)) to 
+construct a natural estimator of the inverse Hessian:
+
+$$ H^{-1} = \sum^{\infty}_{i=0} (I - H)^i $$
+
+Rewriting this equation recursively, as $$ \lim_{j \to \infty} H_{j}^{-1} = H^{-1} $$, we have the following:
+
+$$ H_{j}^{-1} = \sum^{j}_{i=0} (I - H)^i = I + (I - H) H^{-1}_{j-1}  $$
+
+
 
 ### FastIF
 
-In order to improve the scalability and computational cost, FastIF present a
-set of modifications to improve the runtime. It uses k-neareast neighbors to
-narrow the search space down, which can be inexpensive for this context since
-i k-nn is a {% include def.html term="lazy learner" %}) algorithm.
-
-## Applications
-
-### Explainability
-
-### Adversarial Attacks
-
-Real-world data is noisy and it can be problematic for machine learning.
-Adversarial machine learning methods are methods used to feed a model with
-deceptive input, changing the predictions of a classifier. Influence functions
-can help by identifying how to modify a training point to most increase the
-loss in a target point.
-
-### Debugging
-
-### Dataset relabelling
+In order to improve the scalability and computational cost, FastIF {% cite
+guo-etal-2021-fastif %} present a set of modifications to improve the runtime. 
+The work uses k-neareast neighbours to narrow the search space down, 
+which can be inexpensive for this context since i k-nn is a {% include def.html term="lazy learner" %}) algorithm.
 
 ## The Problem with Influence Functions
 
-In some particular settings, influence functions can have a significant loss in
+Influence functions are an approximation and do not always produce correct
+values. In some particular settings, influence functions can have a significant loss in
 information quality. It is known to work with convex loss functions, but for
-non-convex setups the estimations can not work as expected. The work
+non-convex setups, the estimations can not work as expected. The work
 'Influence Functions in Deep Learning are Fragile' {% cite basu2021influence
 %} examines the conditions where influence estimation can be applied to deep
 networks through vast experimentation. In short, there are a few obstacles:
 
-* The estimation in deeper architectures are erroneous, possibly due to poor
+* The estimation in deeper architectures is erroneous, possibly due to poor
   inverse hessian estimation. Weight-decay regularization can help.
 * Wide networks perform poorly. When increasing the width of a network, the
   correlation between the true difference in the loss and the influence
   function decreases substantially.
-* Scale influence functions is challeging. ImageNet contains 1.2 millions
-  images in the training set, which is still prohibitive to re-train leaving
-  one out for each example.  
+* Scale influence functions is challenging. ImageNet contains 1.2 million
+  images in the training set, being difficult to evaluate if influence
+  functions are effective since it is computationally prohibitive to re-train the 
+  model multiple times, leaving each training point out of the training.
   
-
 
 ## Libraries
 
@@ -208,13 +218,13 @@ influence.
 [Torch Influence](https://github.com/alstonlo/torch-influence)  
 A recent implementation (Jul/2022) of influence functions on PyTorch, providing
 three different ways to calculate the inverse hessian: direct computation and
-inversion with torch.autograd, truncated conjugate gradients and LiSSa.
+inversion with torch.autograd, truncated conjugate gradients and LiSSA.
 
 [Fast Influence Functions](https://github.com/salesforce/fast-influence-functions)  
 A modified influence function computation using k-Nearest Neighbors (kNN),
 implemented in PyTorch.
 
-### Others
+### Other implementations
 
 [Influence Function with LiSSA](https://github.com/nayopu/influence_function_with_lissa)  
 A simple implementation with LiSSA on TensorFlow.
@@ -227,6 +237,40 @@ Python notebook with IF applied to other algorithms (Trees, {% include def.html 
 
 [Influence Functions Pytorch](https://github.com/Benqalu/influence-functions-pytorch)  
 Another implementation of influence functions.
+
+## Applications
+
+- **Explainability:** This is the most common use we explored so far, measuring
+  the impact of a training point to explain the impact in a given testing point.
+- **Adversarial Attacks:** Real-world data is noisy, and it can be problematic for machine learning.
+Adversarial machine learning methods are methods used to feed a model with
+deceptive input, changing the predictions of a classifier. Influence functions
+can help by identifying how to modify a training point to increase the
+loss in a target point.
+- **Label mismatch:** Toy datasets are pretty good for experimentation, but
+  real data might contain many mislabeled examples. The idea is to calculate
+  the influence of a particular training point $$ I(z_{i}, z_{i}) $$ if that point was removed. 
+  Email spam is a good example since it usually uses the user's input in
+  classifying whether an email is spam or not.
+
+## Conclusion
+
+The very interesting work from {% cite pmlr-v70-koh17a %} brought influence
+functions to the context of machine learning. In principle, this technique was
+introduced more than 40 years ago by {% cite 10.2307/2285666 %}. 
+One of the main contributions is how to apply to non-differentiable loss functions (i.e.
+hinge loss). In addition to that, the paper uses other existing ideas to
+overcome the computation issue, such as conjugate gradients and LiSSA
+algorithm. Subsequent work studied influence functions on groups ({% cite NEURIPS2019_a78482ce %} 
+and {% cite pmlr-v119-basu20b %}). The last used second-order influence
+functions to capture hidden information when the group size is relatively large.
+I believe this is a powerful technique that will continue to derive new ideas in
+many different areas. One example is in pruning, where a single-shot pruning
+technique was based on sensitivity connections {% cite lee2018snip %}, exploring
+the idea of perturbing weights in a network. Another idea is in the area of
+graphs, a popular framework JK Networks {% cite JKNets %} uses perturbation
+analysis to measure what is the impact of a change in one node embedding in
+another node embedding.
 
 ## References
 

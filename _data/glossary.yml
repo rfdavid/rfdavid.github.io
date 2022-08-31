@@ -14,3 +14,7 @@
 
 - term: lazy learner
   definition: it doesn't learn a discriminative function from the training data, but only store the dataset.
+
+- term: hinge loss
+  defition: a non-differentiable type of cost function that incorporates a margin or distance from the classification boundary into the cost calculation.
+
