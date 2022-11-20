@@ -147,10 +147,22 @@ underlying model are relatively large.
 Computing the inverse hessian is quite expensive and infeasible for a network with 
 lots of parameters. In numpy, it can be calculated using  `numpy.linalg.inv`.
 As a side note, numpy is mostly written in c and the high-level functions are
-python bindings. Nevertheless, it is still an expensive function. In the
+python bindings. Nevertheless, it is still an expensive function. In 
 PyTorch framework, you can compute the Hessians using `torch.autograd.functional.hessian` 
-and then inversing it with `torch.linalg.inv`.  In spite of that, second-order optimization
-techniques can efficiently approximate the calculation.
+and then inversing it with `torch.linalg.inv`. I'm going to expand a little bit
+here using examples because this is a bit tricky. The module `nn.torch`
+contains different classes that provides useful methods for models that inherit
+`nn.Module`. 
+
+*funcional* modules
+takes NN modules and turn them in purely functional stateless so you can explicitely pass
+parameters to a function.
+
+
+`torch.autograd.functional` requires to pass the paramenter to a
+function (see the long discussion [here](https://github.com/pytorch/pytorch/issues/49171)).
+
+ 
 
 ### Conjugate Gradients
 
@@ -172,8 +184,6 @@ $$ H^{-1} = \sum^{\infty}_{i=0} (I - H)^i $$
 Rewriting this equation recursively, as $$ \lim_{j \to \infty} H_{j}^{-1} = H^{-1} $$, we have the following:
 
 $$ H_{j}^{-1} = \sum^{j}_{i=0} (I - H)^i = I + (I - H) H^{-1}_{j-1}  $$
-
-
 
 ### FastIF
 
@@ -261,8 +271,8 @@ introduced more than 40 years ago by {% cite 10.2307/2285666 %}.
 One of the main contributions is how to apply to non-differentiable loss functions (i.e.
 hinge loss). In addition to that, the paper uses other existing ideas to
 overcome the computation issue, such as conjugate gradients and LiSSA
-algorithm. Subsequent work studied influence functions on groups ({% cite NEURIPS2019_a78482ce %} 
-and {% cite pmlr-v119-basu20b %}). The last used second-order influence
+algorithm. Subsequent work studied influence functions on groups {% cite NEURIPS2019_a78482ce %},
+{% cite pmlr-v119-basu20b %}. The last used second-order influence
 functions to capture hidden information when the group size is relatively large.
 I believe this is a powerful technique that will continue to derive new ideas in
 many different areas. One example is in pruning, where a single-shot pruning
