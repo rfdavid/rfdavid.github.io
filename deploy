@@ -1,0 +1,8 @@
+git add _posts/whatever.markdown
+git commit -a -m 'publish whatever'
+bundle exec jekyll build
+cp -R _site /tmp
+git checkout main
+cp -R /tmp/_site/* .
+git commit -a -m 'whatever...'
+git push

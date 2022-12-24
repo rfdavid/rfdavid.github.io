@@ -249,10 +249,19 @@ underlying model are relatively large.</p>
 <p>Computing the inverse hessian is quite expensive and infeasible for a network with 
 lots of parameters. In numpy, it can be calculated using  <code class="language-plaintext highlighter-rouge">numpy.linalg.inv</code>.
 As a side note, numpy is mostly written in c and the high-level functions are
-python bindings. Nevertheless, it is still an expensive function. In the
+python bindings. Nevertheless, it is still an expensive function. In 
 PyTorch framework, you can compute the Hessians using <code class="language-plaintext highlighter-rouge">torch.autograd.functional.hessian</code> 
-and then inversing it with <code class="language-plaintext highlighter-rouge">torch.linalg.inv</code>.  In spite of that, second-order optimization
-techniques can efficiently approximate the calculation.</p>
+and then inversing it with <code class="language-plaintext highlighter-rouge">torch.linalg.inv</code>. I’m going to expand a little bit
+here using examples because this is a bit tricky. The module <code class="language-plaintext highlighter-rouge">nn.torch</code>
+contains different classes that provides useful methods for models that inherit
+<code class="language-plaintext highlighter-rouge">nn.Module</code>.</p>
+
+<p><em>funcional</em> modules
+takes NN modules and turn them in purely functional stateless so you can explicitely pass
+parameters to a function.</p>
+
+<p><code class="language-plaintext highlighter-rouge">torch.autograd.functional</code> requires to pass the paramenter to a
+function (see the long discussion <a href="https://github.com/pytorch/pytorch/issues/49171">here</a>).</p>
 
 <h3 id="conjugate-gradients">
 <a class="anchor" href="#conjugate-gradients" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conjugate Gradients</h3>
@@ -373,8 +382,8 @@ introduced more than 40 years ago by <a class="citation" href="#10.2307/2285666"
 One of the main contributions is how to apply to non-differentiable loss functions (i.e.
 hinge loss). In addition to that, the paper uses other existing ideas to
 overcome the computation issue, such as conjugate gradients and LiSSA
-algorithm. Subsequent work studied influence functions on groups (<a class="citation" href="#NEURIPS2019_a78482ce">(Koh et al., 2019)</a> 
-and <a class="citation" href="#pmlr-v119-basu20b">(Basu et al., 2020)</a>). The last used second-order influence
+algorithm. Subsequent work studied influence functions on groups <a class="citation" href="#NEURIPS2019_a78482ce">(Koh et al., 2019)</a>,
+<a class="citation" href="#pmlr-v119-basu20b">(Basu et al., 2020)</a>. The last used second-order influence
 functions to capture hidden information when the group size is relatively large.
 I believe this is a powerful technique that will continue to derive new ideas in
 many different areas. One example is in pruning, where a single-shot pruning
@@ -420,7 +429,7 @@ another node embedding.</p>
 
     <footer>
   <span>
-    &copy; <time datetime="2022-08-31 11:49:32 -0400">2022</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+    &copy; <time datetime="2022-12-23 21:06:57 -0500">2022</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
   </span>
 </footer>
 

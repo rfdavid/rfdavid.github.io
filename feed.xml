@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2022-08-31T11:49:32-04:00</updated><id>/feed.xml</id><title type="html">rfdavid</title><subtitle>AI | Machine Learning | Graph Neural Networks </subtitle><entry><title type="html">Influence Functions in Machine Learning</title><link href="/influence-functions/" rel="alternate" type="text/html" title="Influence Functions in Machine Learning" /><published>2022-08-31T09:00:00-04:00</published><updated>2022-08-31T09:00:00-04:00</updated><id>/influence-functions</id><content type="html" xml:base="/influence-functions/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2022-12-23T21:06:57-05:00</updated><id>/feed.xml</id><title type="html">rfdavid</title><subtitle>AI | Machine Learning | Graph Neural Networks </subtitle><entry><title type="html">Influence Functions in Machine Learning</title><link href="/influence-functions/" rel="alternate" type="text/html" title="Influence Functions in Machine Learning" /><published>2022-08-31T09:00:00-04:00</published><updated>2022-08-31T09:00:00-04:00</updated><id>/influence-functions</id><content type="html" xml:base="/influence-functions/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;With the increasing complexity of machine learning models, the generated
 predictions are not easily interpretable by humans and are usually treated as black-box
@@ -126,10 +126,19 @@ underlying model are relatively large.&lt;/p&gt;
 &lt;p&gt;Computing the inverse hessian is quite expensive and infeasible for a network with 
 lots of parameters. In numpy, it can be calculated using  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;numpy.linalg.inv&lt;/code&gt;.
 As a side note, numpy is mostly written in c and the high-level functions are
-python bindings. Nevertheless, it is still an expensive function. In the
+python bindings. Nevertheless, it is still an expensive function. In 
 PyTorch framework, you can compute the Hessians using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;torch.autograd.functional.hessian&lt;/code&gt; 
-and then inversing it with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;torch.linalg.inv&lt;/code&gt;.  In spite of that, second-order optimization
-techniques can efficiently approximate the calculation.&lt;/p&gt;
+and then inversing it with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;torch.linalg.inv&lt;/code&gt;. I’m going to expand a little bit
+here using examples because this is a bit tricky. The module &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nn.torch&lt;/code&gt;
+contains different classes that provides useful methods for models that inherit
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nn.Module&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;funcional&lt;/em&gt; modules
+takes NN modules and turn them in purely functional stateless so you can explicitely pass
+parameters to a function.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;torch.autograd.functional&lt;/code&gt; requires to pass the paramenter to a
+function (see the long discussion &lt;a href=&quot;https://github.com/pytorch/pytorch/issues/49171&quot;&gt;here&lt;/a&gt;).&lt;/p&gt;
 
 &lt;h3 id=&quot;conjugate-gradients&quot;&gt;Conjugate Gradients&lt;/h3&gt;
 
@@ -239,8 +248,8 @@ introduced more than 40 years ago by &lt;a class=&quot;citation&quot; href=&quot
 One of the main contributions is how to apply to non-differentiable loss functions (i.e.
 hinge loss). In addition to that, the paper uses other existing ideas to
 overcome the computation issue, such as conjugate gradients and LiSSA
-algorithm. Subsequent work studied influence functions on groups (&lt;a class=&quot;citation&quot; href=&quot;#NEURIPS2019_a78482ce&quot;&gt;(Koh et al., 2019)&lt;/a&gt; 
-and &lt;a class=&quot;citation&quot; href=&quot;#pmlr-v119-basu20b&quot;&gt;(Basu et al., 2020)&lt;/a&gt;). The last used second-order influence
+algorithm. Subsequent work studied influence functions on groups &lt;a class=&quot;citation&quot; href=&quot;#NEURIPS2019_a78482ce&quot;&gt;(Koh et al., 2019)&lt;/a&gt;,
+&lt;a class=&quot;citation&quot; href=&quot;#pmlr-v119-basu20b&quot;&gt;(Basu et al., 2020)&lt;/a&gt;. The last used second-order influence
 functions to capture hidden information when the group size is relatively large.
 I believe this is a powerful technique that will continue to derive new ideas in
 many different areas. One example is in pruning, where a single-shot pruning
