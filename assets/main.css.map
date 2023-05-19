@@ -4,16 +4,16 @@
 	"sources": [
 		"main.scss",
 		"_sass/tale.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_variables.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_base.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_code.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_variables.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_base.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_code.scss",
 		"_sass/tale/_post.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_syntax.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_layout.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_pagination.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_catalogue.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_404.scss",
-		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-43572-b6s2y1/_sass/tale/_tags.scss"
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_syntax.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_layout.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_pagination.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_catalogue.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_404.scss",
+		"../../../../private/var/folders/1p/j28nqbsn4zn262wk762jl11m0000gn/T/jekyll-remote-theme-20230519-46445-qqektn/_sass/tale/_tags.scss"
 	],
 	"sourcesContent": [
 		"@import 'tale';\n",
