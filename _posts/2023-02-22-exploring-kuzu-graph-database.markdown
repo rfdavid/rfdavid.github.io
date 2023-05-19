@@ -2,7 +2,7 @@
 layout: post
 author: Rui F. David
 title:  "Exploring Kùzu Graph Database Management System code"
-date:   2023-02-22 12:51:31 -0400
+jate:   2023-02-22 12:51:31 -0400
 usemathjax: false
 categories: software engineering
 ---
