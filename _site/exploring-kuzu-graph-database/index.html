@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Exploring Kùzu Graph Database Management System code | rfdavid</title>
+<meta name="generator" content="Jekyll v4.3.1" />
+<meta property="og:title" content="Exploring Kùzu Graph Database Management System code" />
+<meta name="author" content="Rui F. David" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction" />
+<meta property="og:description" content="Introduction" />
+<link rel="canonical" href="/exploring-kuzu-graph-database/" />
+<meta property="og:url" content="/exploring-kuzu-graph-database/" />
+<meta property="og:site_name" content="rfdavid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-02-22T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Exploring Kùzu Graph Database Management System code" />
+<script type="application/ld+json">
+{"headline":"Exploring Kùzu Graph Database Management System code","dateModified":"2023-02-22T00:00:00-05:00","datePublished":"2023-02-22T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"/exploring-kuzu-graph-database/"},"url":"/exploring-kuzu-graph-database/","author":{"@type":"Person","name":"Rui F. David"},"@type":"BlogPosting","description":"Introduction","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+
+  <!-- RSS -->
+  <link type="application/atom+xml" rel="alternate" href="/feed.xml" title="rfdavid" />
+
+  <!-- Google Analytics-->
+  
+
+  <!-- Mathjax -->
+  
+</head>
+
+
+  <body>
+
+    <nav class="nav">
+  <div class="nav-container">
+    <a href="/">
+      <h2 class="nav-title">rfdavid</h2>
+    </a>
+    <ul>
+      <li><a href="/posts/">Posts</a></li>
+    </ul>
+  </div>
+</nav>
+
+
+    <main>
+      <div class="post">
+  <div class="post-info">
+    <span>Written by</span>
+    
+        Rui F. David
+    
+
+    
+      <br>
+      <span>on&nbsp;</span><time datetime="2023-02-22 00:00:00 -0500">February 22, 2023</time>
+    
+  </div>
+
+  <h1 class="post-title">Exploring Kùzu Graph Database Management System code</h1>
+  <div class="post-line"></div>
+
+  <h2 id="introduction">Introduction</h2>
+
+<p><a href="https://https://kuzudb.com">Kùzu</a> is a Graph Database Manaagement System born 
+after extensive research conducted over several years at University of Waterloo. 
+Kùzu is highly optimized to handle complex join-heavy
+analytical workloads on very large databases. It is similar to what
+<a href="https://duckdb.org/">DuckDB</a> is doing for SQL. It is extremely useful when you
+need to model your data as a graph from different sources and store it in one
+place for fast extraction in analytics. Kùzu has integration with Pytorch
+Geometric, making it easy to extract graph data and feed it into your PyG models
+to perform a GNN task.
+This article contains my annotations from when I started exploring how Kùzu database
+works. I took a ‘depth limited search’ approach exploring the code by first
+going to the CLI and running a simple query. I used LLDB to debug and learn
+more about the overall design of the database.</p>
+
+<h2 id="starting-from-the-embedded-shell">Starting from the embedded shell</h2>
+
+<p>Starting from the CLI tool, the purpose is to track what is happening
+internally from the initialization to a match query.</p>
+
+<p>Kùzu uses <a href="https://github.com/Taywee/args">args library</a> to parse the arguments.
+<code class="language-plaintext highlighter-rouge">#include "args.hxx"</code>. For instance,  database path (-i parameter) can be
+retrieved by:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="k">auto</span> <span class="n">databasePath</span> <span class="o">=</span> <span class="n">args</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">inputDirFlag</span><span class="p">);</span>
+<span class="kt">uint64_t</span> <span class="n">bpSizeInMB</span> <span class="o">=</span> <span class="n">args</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">bpSizeInMBFlag</span><span class="p">);</span></code></pre></figure>
+
+<p>Initialize default bufferPoolSize as -1u bit mask:
+<code class="language-plaintext highlighter-rouge">uint64_t bpSizeInBytes = -1u;</code>.</p>
+
+<h3 id="systemconfig">SystemConfig</h3>
+
+<p>shell_runner.cpp: SystemConfig systemConfig(bpSizeInBytes);</p>
+
+<p>SystemConfig will initialize 4 variables:</p>
+
+<ul>
+  <li><strong>systemMemSize</strong>: total memory in the system. This is accomplished by mutiplying
+                the number of pages of physical memory by the size of a page in bytes. Both
+                values are retrieved using sysconf from unistd.h library.</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">database</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span>
+   <span class="mi">24</span>           <span class="k">auto</span> <span class="n">systemMemSize</span> <span class="o">=</span>
+<span class="o">-&gt;</span> <span class="mi">25</span>               <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">sysconf</span><span class="p">(</span><span class="n">_SC_PHYS_PAGES</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">sysconf</span><span class="p">(</span><span class="n">_SC_PAGESIZE</span><span class="p">);</span>
+
+<span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">systemMemSize</span>
+<span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">)</span> <span class="err">$</span><span class="mi">9</span> <span class="o">=</span> <span class="mi">34359738368</span></code></pre></figure>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>_SC_PHYS_PAGES : the number of pages of physical memory
+_SC_PAGESIZE : size of a page in bytes
+</code></pre></div></div>
+
+<ul>
+  <li><strong>bufferPoolSize</strong>: defined by the system memory or UINTPTR_MAX x default
+pages buffer ratio. UINTPTR_MAX is the larges value uintptr_t can hold. StorageConfig
+is located at include/common/configs.h and contains the struct with many default values used by the application.</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="o">-&gt;</span> <span class="mi">26</span>           <span class="n">bufferPoolSize</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)(</span><span class="n">StorageConfig</span><span class="o">::</span><span class="n">DEFAULT_BUFFER_POOL_RATIO</span> <span class="o">*</span>
+   <span class="mi">27</span>                                       <span class="p">(</span><span class="n">double_t</span><span class="p">)</span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">systemMemSize</span><span class="p">,</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">UINTPTR_MAX</span><span class="p">));</span></code></pre></figure>
+
+<ul>
+  <li><strong>defaultPageBufferPoolSize and largePageBufferPoolSize</strong>: the bufferPoolSize
+multiplied by the ratio defined for default pages and large pages.</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++">   <span class="mi">29</span>       <span class="n">defaultPageBufferPoolSize</span> <span class="o">=</span>
+<span class="o">-&gt;</span> <span class="mi">30</span>           <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)((</span><span class="n">double_t</span><span class="p">)</span><span class="n">bufferPoolSize</span> <span class="o">*</span> <span class="n">StorageConfig</span><span class="o">::</span><span class="n">DEFAULT_PAGES_BUFFER_RATIO</span><span class="p">);</span>
+   <span class="mi">31</span>       <span class="n">largePageBufferPoolSize</span> <span class="o">=</span>
+   <span class="mi">32</span>           <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)((</span><span class="n">double_t</span><span class="p">)</span><span class="n">bufferPoolSize</span> <span class="o">*</span> <span class="n">StorageConfig</span><span class="o">::</span><span class="n">LARGE_PAGES_BUFFER_RATIO</span><span class="p">);</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">include</span><span class="o">/</span><span class="n">common</span><span class="o">/</span><span class="n">configs</span><span class="p">.</span><span class="n">h</span><span class="o">:</span>
+<span class="k">struct</span> <span class="nc">StorageConfig</span> <span class="p">{</span>
+    <span class="c1">// The default ratio of system memory allocated to buffer pools (including default and large).</span>
+    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">double</span> <span class="n">DEFAULT_BUFFER_POOL_RATIO</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">;</span>
+    <span class="c1">// The default ratio of buffer allocated to default and large pages.</span>
+    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">double</span> <span class="n">DEFAULT_PAGES_BUFFER_RATIO</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">;</span>
+    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">double</span> <span class="n">LARGE_PAGES_BUFFER_RATIO</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">DEFAULT_PAGES_BUFFER_RATIO</span><span class="p">;</span>
+    <span class="p">...</span> <span class="p">(</span><span class="n">omitted</span><span class="p">)</span>
+<span class="p">};</span>
+
+<span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">largePageBufferPoolSize</span><span class="o">/</span><span class="p">(</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">)</span>
+<span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">)</span> <span class="err">$</span><span class="mi">28</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">defaultPageBufferPoolSize</span><span class="o">/</span><span class="p">(</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">)</span>
+<span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">)</span> <span class="err">$</span><span class="mi">29</span> <span class="o">=</span> <span class="mi">19</span></code></pre></figure>
+
+<ul>
+  <li><strong>maxNumThreads</strong>: the number of concurrent threads supported by the available
+hardware. This number is only a hint and might not be accurate.</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">maxNumThreads</span>
+<span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="err">$</span><span class="mi">30</span> <span class="o">=</span> <span class="mi">12</span></code></pre></figure>
+
+<h3 id="embedded-shell">Embedded Shell</h3>
+
+<p>Initialize an instance of EmbddedShell (tools/shell/embedded_shell.cpp):</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">tools</span><span class="o">/</span><span class="n">shell</span><span class="o">/</span><span class="n">shell_runner</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span>
+<span class="o">-&gt;</span> <span class="mi">33</span>           <span class="k">auto</span> <span class="n">shell</span> <span class="o">=</span> <span class="n">EmbeddedShell</span><span class="p">(</span><span class="n">databasePath</span><span class="p">,</span> <span class="n">systemConfig</span><span class="p">);</span></code></pre></figure>
+
+<p>tools/shell/embedded_shell.cpp:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++">   <span class="mi">201</span>  <span class="n">EmbeddedShell</span><span class="o">::</span><span class="n">EmbeddedShell</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">databasePath</span><span class="p">,</span> <span class="k">const</span> <span class="n">SystemConfig</span><span class="o">&amp;</span> <span class="n">systemConfig</span><span class="p">)</span> <span class="p">{</span>
+<span class="o">-&gt;</span> <span class="mi">202</span>      <span class="n">linenoiseHistoryLoad</span><span class="p">(</span><span class="n">HISTORY_PATH</span><span class="p">);</span>
+   <span class="mi">203</span>      <span class="n">linenoiseSetCompletionCallback</span><span class="p">(</span><span class="n">completion</span><span class="p">);</span>
+   <span class="mi">204</span>      <span class="n">linenoiseSetHighlightCallback</span><span class="p">(</span><span class="n">highlight</span><span class="p">);</span>
+   <span class="mi">205</span>      <span class="n">database</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Database</span><span class="o">&gt;</span><span class="p">(</span><span class="n">databasePath</span><span class="p">,</span> <span class="n">systemConfig</span><span class="p">);</span>
+   <span class="mi">206</span>      <span class="n">conn</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;</span><span class="p">(</span><span class="n">database</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+   <span class="mi">207</span>      <span class="n">updateTableNames</span><span class="p">();</span>
+   <span class="mi">208</span>  <span class="p">}</span></code></pre></figure>
+
+<p>Initialize the embedded shell using the databasePath from the parameter and
+also the systemConfig previously defined:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">systemConfig</span>
+<span class="p">(</span><span class="k">const</span> <span class="n">kuzu</span><span class="o">::</span><span class="n">main</span><span class="o">::</span><span class="n">SystemConfig</span><span class="p">)</span> <span class="err">$</span><span class="mi">31</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">defaultPageBufferPoolSize</span> <span class="o">=</span> <span class="mi">20615843020</span>
+  <span class="n">largePageBufferPoolSize</span> <span class="o">=</span> <span class="mi">6871947673</span>
+  <span class="n">maxNumThreads</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="p">}</span></code></pre></figure>
+
+<p><a href="https://github.com/antirez/linenoise">linenoise</a> is a lightweight library for
+editing line, providing useful functionalities such as single and multi line
+editing mode, history handling, completion, hints as you type, among others.
+It is used in Redis, MongoDB and Android. The library is embedded in the
+codebase (tools/shell/linenoise.cpp). I won’t get into the details of
+linenoise configuration.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="o">-&gt;</span> <span class="mi">205</span>      <span class="n">database</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Database</span><span class="o">&gt;</span><span class="p">(</span><span class="n">databasePath</span><span class="p">,</span> <span class="n">systemConfig</span><span class="p">);</span>
+<span class="o">-&gt;</span> <span class="mi">206</span>      <span class="n">conn</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;</span><span class="p">(</span><span class="n">database</span><span class="p">.</span><span class="n">get</span><span class="p">());</span></code></pre></figure>
+
+<p>database and conn are both defined in <code class="language-plaintext highlighter-rouge">embedded_shell.h</code>:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="nl">private:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Database</span><span class="o">&gt;</span> <span class="n">database</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;</span> <span class="n">conn</span><span class="p">;</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>Line 205 and 206 define the database and get the current connection,
+respectively. Before getting into connection in the next section, I’ll take a
+look at the <code class="language-plaintext highlighter-rouge">updateTableNames()</code>, since now we are dealing with catalogue to read
+the database schema.</p>
+
+<h3 id="updatetablenames">updateTableNames()</h3>
+
+<p>There are two type of tables: node and relations. updateTableNames will store
+the table names for both by fetching from database-&gt;catalog. In my database, I
+have “person” and “animal” node tables and “hasOwner” and “knows” relations
+tables:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">tools</span><span class="o">/</span><span class="n">shell</span><span class="o">/</span><span class="n">embedded_shell</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span>
+
+   <span class="mi">67</span>   <span class="kt">void</span> <span class="n">EmbeddedShell</span><span class="o">::</span><span class="n">updateTableNames</span><span class="p">()</span> <span class="p">{</span>
+   <span class="mi">68</span>       <span class="n">nodeTableNames</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+   <span class="mi">69</span>       <span class="n">relTableNames</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="o">-&gt;</span> <span class="mi">70</span>       <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">tableSchema</span> <span class="o">:</span> <span class="n">database</span><span class="o">-&gt;</span><span class="n">catalog</span><span class="o">-&gt;</span><span class="n">getReadOnlyVersion</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">getNodeTableSchemas</span><span class="p">())</span> <span class="p">{</span>
+   <span class="mi">71</span>           <span class="n">nodeTableNames</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">tableSchema</span><span class="p">.</span><span class="n">second</span><span class="o">-&gt;</span><span class="n">tableName</span><span class="p">);</span>
+   <span class="mi">72</span>       <span class="p">}</span>
+   <span class="mi">73</span>       <span class="nf">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">tableSchema</span> <span class="o">:</span> <span class="n">database</span><span class="o">-&gt;</span><span class="n">catalog</span><span class="o">-&gt;</span><span class="n">getReadOnlyVersion</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">getRelTableSchemas</span><span class="p">())</span> <span class="p">{</span>
+   <span class="mi">74</span>           <span class="n">relTableNames</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">tableSchema</span><span class="p">.</span><span class="n">second</span><span class="o">-&gt;</span><span class="n">tableName</span><span class="p">);</span>
+   <span class="mi">75</span>       <span class="p">}</span>
+   <span class="mi">76</span>   <span class="p">}</span></code></pre></figure>
+
+<p>lldb output:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">nodeTableNames</span>
+<span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">basic_string</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">char_traits</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">basic_string</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">char_traits</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">)</span> <span class="err">$</span><span class="mi">41</span> <span class="o">=</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span> <span class="p">{</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s">"person"</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">"animal"</span>
+<span class="p">}</span>
+<span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">p</span> <span class="n">relTableNames</span>
+<span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">basic_string</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">char_traits</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">basic_string</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">char_traits</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">)</span> <span class="err">$</span><span class="mi">42</span> <span class="o">=</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span> <span class="p">{</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s">"hasOwner"</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s">"knows"</span>
+<span class="p">}</span></code></pre></figure>
+
+<h3 id="connection-srcmainconnectioncpp">Connection (src/main/connection.cpp)</h3>
+
+<p>Connection is used to interact with a Database instance, and each Connection is thread-safe.
+Multiple connections can connect to the same Database instance in a multi-threaded environment.
+The description of the API below was extracted from <code class="language-plaintext highlighter-rouge">src/include/main/connection.h</code>:</p>
+
+<p>Creates a connection to the database.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="k">explicit</span> <span class="nf">Connection</span><span class="p">(</span><span class="n">Database</span><span class="o">*</span> <span class="n">database</span><span class="p">);</span></code></pre></figure>
+
+<p>Destructor</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="o">~</span><span class="n">Connection</span><span class="p">();</span></code></pre></figure>
+
+<p>Manually starts a new read-only transaction in the current connection.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">void</span> <span class="nf">beginReadOnlyTransaction</span><span class="p">();</span></code></pre></figure>
+
+<p>Manually starts a new write transaction in the current connection.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">void</span> <span class="nf">beginWriteTransaction</span><span class="p">();</span></code></pre></figure>
+
+<p>Manually commits the current transaction.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">void</span> <span class="nf">commit</span><span class="p">();</span></code></pre></figure>
+
+<p>Manually rollbacks the current transaction.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">void</span> <span class="nf">rollback</span><span class="p">();</span></code></pre></figure>
+
+<p>Sets the maximum number of threads to use for execution in the current connection.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">void</span> <span class="nf">setMaxNumThreadForExec</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">numThreads</span><span class="p">);</span></code></pre></figure>
+
+<p>Returns the maximum number of threads to use for execution in the current connection.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="kt">uint64_t</span> <span class="nf">getMaxNumThreadForExec</span><span class="p">();</span></code></pre></figure>
+
+<p>Executes the given query and returns the result.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">QueryResult</span><span class="o">&gt;</span> <span class="n">query</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">query</span><span class="p">);</span></code></pre></figure>
+
+<p>Prepares the given query and returns the prepared statement.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">PreparedStatement</span><span class="o">&gt;</span> <span class="n">prepare</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">query</span><span class="p">);</span></code></pre></figure>
+
+<p>Executes the given prepared statement with args and returns the result.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="o">...</span> <span class="nc">Args</span><span class="p">&gt;</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">QueryResult</span><span class="o">&gt;</span> <span class="n">execute</span><span class="p">(</span>
+    <span class="n">PreparedStatement</span><span class="o">*</span> <span class="n">preparedStatement</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">Args</span><span class="o">&gt;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">common</span><span class="o">::</span><span class="n">Value</span><span class="o">&gt;&gt;</span> <span class="n">inputParameters</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">executeWithParams</span><span class="p">(</span><span class="n">preparedStatement</span><span class="p">,</span> <span class="n">inputParameters</span><span class="p">,</span> <span class="n">args</span><span class="p">...);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Executes the given prepared statement with inputParams and returns the result.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">QueryResult</span><span class="o">&gt;</span> <span class="n">executeWithParams</span><span class="p">(</span><span class="n">PreparedStatement</span><span class="o">*</span> <span class="n">preparedStatement</span><span class="p">,</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">common</span><span class="o">::</span><span class="n">Value</span><span class="o">&gt;&gt;&amp;</span> <span class="n">inputParams</span><span class="p">);</span></code></pre></figure>
+
+<p>Return all node table names in string format.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getNodeTableNames</span><span class="p">();</span></code></pre></figure>
+
+<p>Return all rel table names in string format.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getRelTableNames</span><span class="p">();</span></code></pre></figure>
+
+<p>Return the node property names.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getNodePropertyNames</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">tableName</span><span class="p">);</span></code></pre></figure>
+
+<p>Return the relation property names.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getRelPropertyNames</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">relTableName</span><span class="p">);</span></code></pre></figure>
+
+<p>If you wondering what is behind KUZU_API, the datatype is defined in src/include/common/types/types.h:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">KUZU_API</span> <span class="k">enum</span> <span class="n">DataTypeID</span> <span class="o">:</span> <span class="kt">uint8_t</span> <span class="p">{</span>
+    <span class="n">ANY</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">NODE</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">REL</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span>
+
+    <span class="c1">// physical types</span>
+
+    <span class="c1">// fixed size types</span>
+    <span class="n">BOOL</span> <span class="o">=</span> <span class="mi">22</span><span class="p">,</span>
+    <span class="n">INT64</span> <span class="o">=</span> <span class="mi">23</span><span class="p">,</span>
+    <span class="n">DOUBLE</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span>
+    <span class="n">DATE</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+    <span class="n">TIMESTAMP</span> <span class="o">=</span> <span class="mi">26</span><span class="p">,</span>
+    <span class="n">INTERVAL</span> <span class="o">=</span> <span class="mi">27</span><span class="p">,</span>
+
+    <span class="n">INTERNAL_ID</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+
+    <span class="c1">// variable size types</span>
+    <span class="n">STRING</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">LIST</span> <span class="o">=</span> <span class="mi">52</span><span class="p">,</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>to be continued…</p>
+
+</div>
+
+
+
+<div class="pagination">
+  
+  
+    <a href="/influence-functions/" class="right arrow">&#8594;</a>
+  
+
+  <a href="#" class="top">Top</a>
+</div>
+
+    </main>
+
+    <footer>
+  <span>
+    &copy; <time datetime="2023-05-19 09:36:20 -0400">2023</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+  </span>
+</footer>
+
+  </body>
+</html>
