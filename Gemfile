@@ -1,5 +1,7 @@
 source "https://rubygems.org"
-gem "jekyll", "~> 4.2.0"
+# gem "jekyll", "~> 4.2.0"
+gem "jekyll", github: "jekyll/jekyll", ref: "refs/pull/9248/head"
+# gem "github-pages"
 gem "minima", "~> 2.5"
 # If you want to use GitHub Pages, remove the "gem "jekyll"" above and
 # uncomment the line below. To upgrade, run `bundle update github-pages`.
