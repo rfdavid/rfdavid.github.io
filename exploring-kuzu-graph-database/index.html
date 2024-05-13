@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Exploring Kùzu Graph Database Management System code" />
 <script type="application/ld+json">
-{"headline":"Exploring Kùzu Graph Database Management System code","dateModified":"2023-02-22T00:00:00-05:00","datePublished":"2023-02-22T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"/exploring-kuzu-graph-database/"},"url":"/exploring-kuzu-graph-database/","author":{"@type":"Person","name":"Rui F. David"},"@type":"BlogPosting","description":"Introduction","@context":"https://schema.org"}</script>
+{"headline":"Exploring Kùzu Graph Database Management System code","dateModified":"2023-02-22T00:00:00-05:00","datePublished":"2023-02-22T00:00:00-05:00","author":{"@type":"Person","name":"Rui F. David"},"mainEntityOfPage":{"@type":"WebPage","@id":"/exploring-kuzu-graph-database/"},"url":"/exploring-kuzu-graph-database/","@type":"BlogPosting","description":"Introduction","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -355,7 +355,69 @@ The description of the API below was extracted from <code class="language-plaint
     <span class="n">LIST</span> <span class="o">=</span> <span class="mi">52</span><span class="p">,</span>
 <span class="p">};</span></code></pre></figure>
 
-<p>to be continued…</p>
+<h2 id="starting-from-c-api">Starting from C++ API</h2>
+
+<p>I will now explore <code class="language-plaintext highlighter-rouge">COPY</code> command from the C++ API by using the existing
+example from <code class="language-plaintext highlighter-rouge">examples/cpp/main.cpp</code>. To compile, you just have to add
+<code class="language-plaintext highlighter-rouge">add_subdirectory(examples/cpp)</code> inside <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> and run <code class="language-plaintext highlighter-rouge">make test</code>
+or <code class="language-plaintext highlighter-rouge">make debug</code>. The example will be compiled and available at
+<code class="language-plaintext highlighter-rouge">build/debug/examples/cpp</code> or <code class="language-plaintext highlighter-rouge">build/release/examples/cpp</code> depending on the
+make parameter used to compile.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="n">main</span><span class="p">.</span><span class="n">cpp</span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"main/kuzu.h"</span><span class="cp">
+</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">kuzu</span><span class="o">::</span><span class="n">main</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">database</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Database</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"/tmp/db"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;</span><span class="p">(</span><span class="n">database</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+
+    <span class="n">connection</span><span class="o">-&gt;</span><span class="n">query</span><span class="p">(</span><span class="s">"CREATE NODE TABLE tableOfTypes (id INT64, int64Column INT64, doubleColumn DOUBLE, booleanColumn BOOLEAN, dateColumn DATE, timestampColumn TIMESTAMP, stringColumn STRING, PRIMARY KEY (id));"</span><span class="p">);</span>
+    <span class="n">connection</span><span class="o">-&gt;</span><span class="n">query</span><span class="p">(</span><span class="s">"COPY tableOfTypes FROM </span><span class="se">\"</span><span class="s">/Users/rfdavid/Devel/waterloo/kuzu/dataset/copy-test/node/csv/types_50k.csv</span><span class="se">\"</span><span class="s"> (HEADER=true);"</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>This example created a node table named <code class="language-plaintext highlighter-rouge">tableOfTypes</code> (from copy-test schema)
+and use the command COPY to import 50k rows from <code class="language-plaintext highlighter-rouge">types_50k.csv</code> file.</p>
+
+<p>I will start debugging by adding a breakpoint before the COPY command:</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">b</span> <span class="n">main</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span><span class="mi">11</span>
+<span class="n">Breakpoint</span> <span class="mi">1</span><span class="o">:</span> <span class="n">where</span> <span class="o">=</span> <span class="n">example</span><span class="o">-</span><span class="n">cpp</span><span class="err">`</span><span class="n">main</span> <span class="o">+</span> <span class="mi">136</span> <span class="n">at</span> <span class="n">main</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span><span class="mi">11</span><span class="o">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="mh">0x0000000100003c80</span>
+<span class="p">(</span><span class="n">lldb</span><span class="p">)</span> <span class="n">r</span>
+<span class="n">Process</span> <span class="mi">59055</span> <span class="n">launched</span><span class="o">:</span> <span class="err">'</span><span class="o">/</span><span class="n">Users</span><span class="o">/</span><span class="n">rfdavid</span><span class="o">/</span><span class="n">Devel</span><span class="o">/</span><span class="n">waterloo</span><span class="o">/</span><span class="n">kuzu</span><span class="o">/</span><span class="n">build</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">cpp</span><span class="o">/</span><span class="n">example</span><span class="o">-</span><span class="n">cpp</span><span class="err">'</span> <span class="p">(</span><span class="n">arm64</span><span class="p">)</span>
+<span class="n">Process</span> <span class="mi">59055</span> <span class="n">stopped</span>
+<span class="o">*</span> <span class="kr">thread</span> <span class="err">#</span><span class="mi">1</span><span class="p">,</span> <span class="n">queue</span> <span class="o">=</span> <span class="err">'</span><span class="n">com</span><span class="p">.</span><span class="n">apple</span><span class="p">.</span><span class="n">main</span><span class="o">-</span><span class="kr">thread</span><span class="err">'</span><span class="p">,</span> <span class="n">stop</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">breakpoint</span> <span class="mf">1.1</span>
+    <span class="n">frame</span> <span class="err">#</span><span class="mi">0</span><span class="o">:</span> <span class="mh">0x0000000100003c80</span> <span class="n">example</span><span class="o">-</span><span class="n">cpp</span><span class="err">`</span><span class="n">main</span> <span class="n">at</span> <span class="n">main</span><span class="p">.</span><span class="n">cpp</span><span class="o">:</span><span class="mi">11</span><span class="o">:</span><span class="mi">5</span>
+   <span class="mi">1</span>   	<span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">iostream</span><span class="o">&gt;</span>
+   <span class="mi">2</span>
+   <span class="mi">3</span>   	<span class="err">#</span><span class="n">include</span> <span class="s">"main/kuzu.h"</span>
+   <span class="mi">4</span>   	<span class="k">using</span> <span class="k">namespace</span> <span class="n">kuzu</span><span class="o">::</span><span class="n">main</span><span class="p">;</span>
+   <span class="mi">5</span>
+   <span class="mi">6</span>   	<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+   <span class="mi">7</span>   	    <span class="k">auto</span> <span class="n">database</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Database</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"/tmp/db"</span><span class="p">);</span>
+   <span class="mi">8</span>   	    <span class="k">auto</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;</span><span class="p">(</span><span class="n">database</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+   <span class="mi">9</span>
+   <span class="mi">10</span>  	    <span class="n">connection</span><span class="o">-&gt;</span><span class="n">query</span><span class="p">(</span><span class="s">"CREATE NODE TABLE tableOfTypes (id INT64, int64Column INT64, doubleColumn DOUBLE, booleanColumn BOOLEAN, dateColumn DATE, timestampColumn TIMESTAMP, stringColumn STRING, PRIMARY KEY (id));"</span><span class="p">);</span>
+<span class="o">-&gt;</span> <span class="mi">11</span>  	    <span class="n">connection</span><span class="o">-&gt;</span><span class="n">query</span><span class="p">(</span><span class="s">"COPY tableOfTypes FROM </span><span class="se">\"</span><span class="s">/Users/rfdavid/Devel/waterloo/kuzu/dataset/copy-test/node/csv/types_50k.csv</span><span class="se">\"</span><span class="s"> (HEADER=true);"</span><span class="p">);</span>
+   <span class="mi">12</span>  	<span class="p">}</span>
+<span class="n">Target</span> <span class="mi">0</span><span class="o">:</span> <span class="p">(</span><span class="n">example</span><span class="o">-</span><span class="n">cpp</span><span class="p">)</span> <span class="n">stopped</span><span class="p">.</span></code></pre></figure>
+
+<p>Inside <code class="language-plaintext highlighter-rouge">Connection::query</code>, a mutex lock is set, a <code class="language-plaintext highlighter-rouge">preparedStatement</code> will be
+created and executed through <code class="language-plaintext highlighter-rouge">executeAndAutoCommitIfNecessaryNoLock</code>.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++">   <span class="mi">76</span>  	<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">QueryResult</span><span class="o">&gt;</span> <span class="n">Connection</span><span class="o">::</span><span class="n">query</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">query</span><span class="p">)</span> <span class="p">{</span>
+   <span class="mi">77</span>  	    <span class="n">lock_t</span> <span class="n">lck</span><span class="p">{</span><span class="n">mtx</span><span class="p">};</span>
+<span class="o">-&gt;</span> <span class="mi">78</span>  	    <span class="k">auto</span> <span class="n">preparedStatement</span> <span class="o">=</span> <span class="n">prepareNoLock</span><span class="p">(</span><span class="n">query</span><span class="p">);</span>
+   <span class="mi">79</span>  	    <span class="k">return</span> <span class="nf">executeAndAutoCommitIfNecessaryNoLock</span><span class="p">(</span><span class="n">preparedStatement</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+   <span class="mi">80</span>  	<span class="p">}</span></code></pre></figure>
+
+<p>A prepared statement is a parameterized query used to avoid repeated execution
+of the same query. <code class="language-plaintext highlighter-rouge">prepareNoLock</code> will go through the following steps:
+parsing, binding, planning and optmizing and then return a <code class="language-plaintext highlighter-rouge">PreparedStatement</code>
+object to <code class="language-plaintext highlighter-rouge">Connection::query</code>.</p>
 
 </div>
 
@@ -374,7 +436,7 @@ The description of the API below was extracted from <code class="language-plaint
 
     <footer>
   <span>
-    &copy; <time datetime="2023-05-19 09:58:26 -0400">2023</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
+    &copy; <time datetime="2024-05-13 10:05:27 -0400">2024</time> . Made with Jekyll using the <a href="https://github.com/chesterhow/tale/">Tale</a> theme.
   </span>
 </footer>
 
