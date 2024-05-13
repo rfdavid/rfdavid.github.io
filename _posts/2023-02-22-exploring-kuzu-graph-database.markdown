@@ -333,4 +333,73 @@ KUZU_API enum DataTypeID : uint8_t {
 };
 {% endhighlight %}
 
-to be continued...
+## Starting from C++ API
+
+I will now explore `COPY` command from the C++ API by using the existing
+example from `examples/cpp/main.cpp`. To compile, you just have to add
+`add_subdirectory(examples/cpp)` inside `CMakeLists.txt` and run `make test`
+or `make debug`. The example will be compiled and available at
+`build/debug/examples/cpp` or `build/release/examples/cpp` depending on the
+make parameter used to compile.
+
+{% highlight c++ %}
+main.cpp
+
+#include <iostream>
+
+#include "main/kuzu.h"
+using namespace kuzu::main;
+
+int main() {
+    auto database = std::make_unique<Database>("/tmp/db");
+    auto connection = std::make_unique<Connection>(database.get());
+
+    connection->query("CREATE NODE TABLE tableOfTypes (id INT64, int64Column INT64, doubleColumn DOUBLE, booleanColumn BOOLEAN, dateColumn DATE, timestampColumn TIMESTAMP, stringColumn STRING, PRIMARY KEY (id));");
+    connection->query("COPY tableOfTypes FROM \"/Users/rfdavid/Devel/waterloo/kuzu/dataset/copy-test/node/csv/types_50k.csv\" (HEADER=true);");
+}
+
+{% endhighlight %}
+
+This example created a node table named `tableOfTypes` (from copy-test schema)
+and use the command COPY to import 50k rows from `types_50k.csv` file.
+
+I will start debugging by adding a breakpoint before the COPY command:
+
+{% highlight c++ %}
+(lldb) b main.cpp:11
+Breakpoint 1: where = example-cpp`main + 136 at main.cpp:11:5, address = 0x0000000100003c80
+(lldb) r
+Process 59055 launched: '/Users/rfdavid/Devel/waterloo/kuzu/build/debug/examples/cpp/example-cpp' (arm64)
+Process 59055 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x0000000100003c80 example-cpp`main at main.cpp:11:5
+   1   	#include <iostream>
+   2
+   3   	#include "main/kuzu.h"
+   4   	using namespace kuzu::main;
+   5
+   6   	int main() {
+   7   	    auto database = std::make_unique<Database>("/tmp/db");
+   8   	    auto connection = std::make_unique<Connection>(database.get());
+   9
+   10  	    connection->query("CREATE NODE TABLE tableOfTypes (id INT64, int64Column INT64, doubleColumn DOUBLE, booleanColumn BOOLEAN, dateColumn DATE, timestampColumn TIMESTAMP, stringColumn STRING, PRIMARY KEY (id));");
+-> 11  	    connection->query("COPY tableOfTypes FROM \"/Users/rfdavid/Devel/waterloo/kuzu/dataset/copy-test/node/csv/types_50k.csv\" (HEADER=true);");
+   12  	}
+Target 0: (example-cpp) stopped.
+{% endhighlight %}
+
+Inside `Connection::query`, a mutex lock is set, a `preparedStatement` will be
+created and executed through `executeAndAutoCommitIfNecessaryNoLock`.
+
+{% highlight c++ %}
+   76  	std::unique_ptr<QueryResult> Connection::query(const std::string& query) {
+   77  	    lock_t lck{mtx};
+-> 78  	    auto preparedStatement = prepareNoLock(query);
+   79  	    return executeAndAutoCommitIfNecessaryNoLock(preparedStatement.get());
+   80  	}
+{% endhighlight %}
+
+A prepared statement is a parameterized query used to avoid repeated execution
+of the same query. `prepareNoLock` will go through the following steps:
+parsing, binding, planning and optmizing and then return a `PreparedStatement`
+object to `Connection::query`.
