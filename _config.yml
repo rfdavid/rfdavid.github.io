@@ -18,3 +18,9 @@ plugins:
   - jekyll-remote-theme
   - jekyll/scholar
   - jekyll-toc
+
+scholar:
+  style: ieee
+  locale: en
+  source: ./_bibliography
+  bibliography: references.bib
