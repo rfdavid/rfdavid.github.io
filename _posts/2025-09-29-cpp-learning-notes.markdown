@@ -305,11 +305,11 @@ UniquePtr<int> p1(new int(42));
 UniquePtr<int> p2(p1); // copy constructor
 UniquePtr<int> p3 = p1; // this is also a copy constructor, NOT a copy assignment
 
-p3 = p1; // this is a copy constructor
+p3 = p1; // this is a copy assignment
 ```
 
 You shouldn't be allowed to write the code above since unique pointers are
-obviously unique. Note that the second example `p3 = p1` is also a copy
+obviously unique. Note that the second example `UniquePtr<int> p3 = p1` is also a copy
 constructor, not a copy assignment. This is because `p3` is being created in this
 line, so it is a copy constructor.
 So we delete the copy constructor and copy assignment operator:
@@ -359,23 +359,181 @@ UniquePtr(UniquePtr&& other) : ptr(other.ptr) noexcept {
 
 The rvalue reference `&&` binds to the rvalue produced by `std::move()`,
 allowing the move constructor to transfer ownership of the resource from the
-source object.
-`std::move()` doesn't move anything, it is only a simple cast that converts
+source object. `std::move()` doesn't move anything, it is only a simple cast that converts
 its argument into an rvalue.
 
+
+For move assingment operator, we want to perform the following:
+
+```cpp
+UniquePtr<int> p1(new int(42));
+UniquePtr<int> p2(new int(99));
+p1 = std::move(p2);
+```
+
+It can be implemented as follows:
+
+```cpp
+UniquePtr& operator=(UniquePtr&& other) noexcept {
+    if (this != &other) {
+        delete ptr;
+        ptr = other.ptr;
+        other.ptr = nullptr;
+    }
+    return *this;
+}
+```
+
+We cleaned up the current resource (`delete ptr`)  and replace it by the new
+assigned resource. We also set the `other.ptr` to `nullptr` to avoid double-free.
+
+**Destructor** will simply remove the resource when the unique pointer goes out of scope:
+
+```cpp
+~UniquePtr() {
+    // no need for this if since delete nullptr is safe in C++
+    if (ptr != nullptr) {
+        delete ptr;
+    }
+}
+```
+
+This is the basic implementation of a custom unique pointer. We can also add
+get, release, reset and dereference methods to make it more complete.
+For instance, we want to implement the following:
+
+```cpp
+uniq_ptr->
+*uniq_ptr // de-reference operator
+uniq_ptr.get() // returns a raw pointer
+```
+
+where these should return the object that belongs to this unique pointer. That
+can be implemented as:
+
+```cpp
+// implementing opertor '->'
+// '->' expects a pointer T*
+// ptr is already a pointer, so return ptr
+T* operator->() { return ptr; }
+
+// implements de-reference operator *uniq_ptr
+// we expect the object, so we return the reference
+// we need to dereference ptr by returning *ptr
+T& operator*() { return *ptr; }
+
+// simply return this pointer
+T* get() const { return ptr; }
+```
+
+`reset` destroy the current object and optionally take ownership of a new
+object. `release` gives up ownership of the object without destroying it.
+They can be implemented as follows:
+
+```cpp
+void reset(T* newPtr = nullptr) {
+    delete ptr;
+    ptr = newPtr;
+}
+
+T* release() {
+    T* temp = ptr;
+    ptr = nullptr;
+    return temp;
+}
+```
+
+We may also want to implement bool and comparison operators. For example:
+
+```cpp
+// bool operator
+if (uniqPtr) {
+...
+}
+
+if (uniqPtr == otherPtr) {
+...
+}
+```
+
+
+```cpp
+explicit operator bool() const { return ptr != nullptr; }
+bool operator==(const UniquePtr& other) const {
+    return ptr == other.ptr;
+}
+```
+
+Here is the complete example:
+
+
+```cpp
+template<typename T>
+class UniquePtr {
+private:
+   T* ptr;
+
+public:
+    // Initialization
+    explicit UniquePtr(T* p) : ptr(p) {}
+
+    // Destructor
+    ~UniquePtr() {
+        delete ptr;
+    }
+
+    // Copy semantics: unique pointers cannot be copied
+    UniquePtr(const UniquePtr&) = delete;
+    UniquePtr& operator=(const UniquePtr&) = delete;
+
+
+    // Move semantics
+    UniquePtr(UniquePtr&& other) : ptr(other.ptr) noexcept {
+       other.ptr = nullptr;
+    }
+    UniquePtr& operator=(UniquePtr&& other) noexcept {
+        if (this != &other) {
+            delete ptr;
+            ptr = other.ptr;
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    // release semantics: giev up ownership of the current object
+    // and return the released object pointer
+    T* release() {
+        T* temp = ptr;
+        ptr = nullptr;
+        return temp;
+    }
+
+    // reset semantics: destroy the owned object and replace
+    // by another if passed
+    void reset(T* newPtr = nullptr) {
+        delete ptr;
+        ptr = newPtr;
+    }
+
+    // other operators
+    T* operator->() { return ptr; }
+    T& operator*() { return *ptr; }
+    T* get() { return ptr; }
+
+    // comparison
+    explicit operator bool() const { return ptr != nullptr }
+    bool operator==(const UniquePtr& other) const {
+        return ptr == other.ptr;
+    }
+};
+```
+
+####
 
 ```cpp
 class SharedPtr() {
 };
 ```
-
-
-#### Custom Weak Pointer
-```cpp
-class WeakPtr() {
-};
-```
-
 
 
 ## Threads
