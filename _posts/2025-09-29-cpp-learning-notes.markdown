@@ -528,6 +528,30 @@ public:
 };
 ```
 
+#### std::make_unique
+
+Consider the following example:
+
+```cpp
+auto* obj = new int(42);
+std::unique_ptr<int> p1(obj);
+std::unique_ptr<int> p2(obj);
+```
+
+The code above contains the problem of double ownership that can cause
+undefined behaviour when trying to delete the same object twice. When `p1` or `p2`
+is out of the scope, the destructor will be called and the object will be deleted.
+After deletion, the pointer will remain dangling, and when the second unique pointer
+tries to delete the same object, it will lead to undefined behavior. When
+calling `delete` on a pointer, it frees the memory, but the pointer still
+points to the same memory location.
+
+C++ 14 introduced `std::make_unique`, which is a safer and more efficient way to create
+unique pointers. It eliminates the possibility of double ownership by ensuring that the
+object is created and owned by a single unique pointer from the start.
+
+
+
 ####
 
 ```cpp
@@ -537,7 +561,6 @@ class SharedPtr() {
 
 
 ## Threads
-
 
 ### Mutex
 
