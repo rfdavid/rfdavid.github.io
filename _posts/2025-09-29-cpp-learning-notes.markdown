@@ -21,6 +21,8 @@ believe this is a good way to consolidate and review the content.
 Everything here is based on multiple sources, including books, courses, and articles.
 I have been perusing some files from libc++ (LLVM's C++ standard library used
 by clang) {% cite LLVM %} and libstdc++ (GCC's library) {% cite GNU_library %} to understand how things work under the hood.
+I called it random because there is no specific order or structure to the topics covered.
+Sometimes I just feel like writing about something I found interesting.
 
 ## ABI
 
@@ -693,9 +695,68 @@ from the memory every time it is accessed, and not cached in a register.
 
 #### Example: implementing my own mutex
 
+Usuaully, it is not a good idea to implement your own mutex. At least, I
+haven't beaten the performance of the standard library implementation. For
+learning purpose, the implementation using spinlock is quite straightforward.
+The following example is a mutex lock using spinlock with exponential backoff:
+
+```cpp
+class SpinlockMutex {
+private:
+    std::atomic<bool> locked(false);
+    static constexpr int MAX_BACKOFF = 1024;
+
+public:
+    void acquire() {
+        bool expected = false;
+        int backoff = 1;
+        while(!locked.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
+            expected = false; // reset after failure
+            for (int i = 0; i < backoff; ++i) {
+                _mm_pause();
+            }
+            backoff = std::min(backoff * 2, MAX_BACKOFF);
+        }
+    }
+
+    void release() {
+        locked.store(false, std::memory_order_release);
+    }
+};
+```
+
+As a side note, the initialization with `()` won't work on C++ 17 and prior.
+Instead, it should be initialized with `{}` (`std::atomic<bool>
+locked{false}`).
+
+There are two main interfaces, `acquire` and `release`. The `release` method
+simply sets the atomic boolean `locked` to false, indicating that the mutex is
+now available. The `acquire` method tries to set `locked` to true using
+`compare_exchange_weak`, which is an atomic operation that compares the current
+value of `locked` with `expected`. If they are equal, it sets `locked` to true
+and returns true. If they are not equal, it updates `expected` with the current
+value of `locked` and returns false. That's why we need to reset `expected` to false.
+We use a loop that represents our spinlock. If the `compare_exchange_weak` fails,
+we perform an exponential backoff by pausing for a certain number of iterations
+before retrying. This helps to reduce contention and improve performance under high load.
+
+`_mm_pause()` is an intrinsic that provides a hint to the processor that we
+are in a spin-wait loop. It can help improve performance by reducing power consumption
+and improving the efficiency of the spin-wait loop.
+Intrinsics are low-level functions that provide direct access to CPU instructions, so you
+don't have to directly write assembly code. It is a portable way to access specific CPU features.
+There is a nice list of [intel intrinsics here](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html),
+which includes `_mm_pause()` {% cite Intel_Intrinsics %}.
+
+As I a just bit curious about `_mm_pause()`, this intrinsics translates to `rep nop`,
+which is actually the pause instruction.
+
+
+![large](/assets/images/rep-nop.png "Godbolt rep nop")
+_Figure 1: REP NOP instruction on godbolt.org_
+
+
 #### Example: implementing my own lock_guard
-
-
 
 
 ## Lambda Expressions
@@ -744,7 +805,11 @@ a generator for sequences of values.
 
 ## Other
 
-## Spaceship operator
+### C++ Vexing Parse
+
+https://www.youtube.com/watch?v=ByKf_foSlXY
+
+### Spaceship operator
 
 C++ 20 introduced provides an operator called [spaceship operator](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0515r3.pdf) (`<=>`) that allows to write
 one function to take care of all comparison operations {% cite ISOCPP %}. This is useful when implementing custom types that need to be compared.
@@ -760,7 +825,7 @@ struct IntWrapper {
 
 https://devblogs.microsoft.com/cppblog/simplify-your-code-with-rocket-science-c20s-spaceship-operator/
 
-## Composable Range Views
+### Composable Range Views
 
 C++ 20 introduced Standard Library Ranges, which is a way to transform and
 filter data without creating intermediate copies. **Views** are lightweight
