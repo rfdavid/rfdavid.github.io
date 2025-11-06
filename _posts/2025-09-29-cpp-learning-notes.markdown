@@ -225,7 +225,8 @@ UniquePtr<int> objPtr(new int());
 
 In this case, myClass is a unique pointer that wraps up a raw pointer returned from
 `new MyClass()`.
-*Fun fact: `new int()` initializes with 0 whereas `new int` initializes with garbage.*
+
+> Fun fact: `new int()` initializes with 0 whereas `new int` initializes with garbage.
 
 So we start our custom unique pointer class with the
 following:
@@ -488,11 +489,11 @@ public:
     UniquePtr(const UniquePtr&) = delete;
     UniquePtr& operator=(const UniquePtr&) = delete;
 
-
     // Move semantics
     UniquePtr(UniquePtr&& other) : ptr(other.ptr) noexcept {
        other.ptr = nullptr;
     }
+
     UniquePtr& operator=(UniquePtr&& other) noexcept {
         if (this != &other) {
             delete ptr;
@@ -553,11 +554,97 @@ unique pointers. It eliminates the possibility of double ownership by ensuring t
 object is created and owned by a single unique pointer from the start.
 
 
+#### Custom Shared Pointer
 
-####
+The main difference from unique pointers is that now we can have multiple shared pointers pointing
+to the same object. The copy semantics are allowed, but we have to keep track
+of the reference count. When the last shared pointer pointing to an object is
+destroyed or reset, the object is deleted. For the move semantics, it is similar
+to unique pointer, where the ownership is transferred.
+
+You can create multiple shared pointers instances by pointing t othe same
+object by **copying or assigning** from an existing shared pointer, but never
+multiple instances from a raw pointer.
+
+```
+// WRONG!
+MyClass* raw = new MyClass();
+SharedPtr<MyClass> s1(raw);
+SharedPtr<MyClass> s2(raw);
+```
+
+The examble above created two independent control blocks, so the object will be
+deleted twice since we have two difference reference counters.
+
 
 ```cpp
-class SharedPtr() {
+template<typename T>
+class SharedPtr {
+private:
+    T* ptr;
+    size_t* ref_count;
+
+public:
+    explicit SharedPtr(T* p) : ptr(p), ref_count(new size_t(1)) {}
+
+    // move constructor
+    SharedPtr(SharedPtr&& other) noexcept
+        : ptr(other.ptr), ref_count(other.ref_count) {
+        other.ptr = nullptr;
+        other.ref_count = nullptr;
+    }
+
+    // move assignment
+    // s1 = str::move(s2)
+    SharedPtr& operator=(SharedPtr&& other) noexcept {
+       if (this != &other) {
+            release();
+            ptr = other.ptr;
+            ref_count = other.ref_count;
+            other.ptr = nullptr;
+            ther.ref_count = nullptr;
+       }
+       return *this;
+    }
+
+    // copy constructor
+    SharedPtr(const SharedPtr& other)
+        : ptr(other.ptr), ref_count(other.ref_count) {
+        if (ref_count) {
+            ++(*ref_count);
+        }
+    }
+
+    // copy assignment
+    // s1 = s2
+    SharedPtr& operator=(const SharedPtr& other) {
+        if (this != &other) {
+            release();
+            ptr = other.ptr;
+            ref_count = other.ref_count;
+            if (ref_count) {
+                ++(*ref_count);
+            }
+        }
+        return *this;
+    }
+
+    // destroy
+    ~SharedPtr() {
+        release();
+    }
+
+private:
+    void release() {
+        if (ref_count) {
+            --(*ref_count);
+            if (*ref_count == 0) {
+                delete ptr;
+                delete ref_count;
+            }
+        }
+    }
+
 };
 ```
 
