@@ -894,13 +894,51 @@ a generator for sequences of values.
 
 ### C++ Vexing Parse
 
-https://www.youtube.com/watch?v=ByKf_foSlXY
+Apparently, the term "vexing parse" was coined by Scott Meyers in his book
+Effective STL {% cite Meyers_2014 %} to describe a specific syntactic ambiguity in C++.
+Meyers highlighted how the C++ grammar can mistakenly interpret what looks like
+object instantiation as a function declaration.
+
+For example, consider the following code:
+
+```cpp
+class Timer {
+public:
+    Timer() { std::cout << "Timer created\n"; }
+};
+
+int main() {
+    Timer t1();  // this declares a function, not an object!
+                 // function named t1 that takes no parameters
+                 // and returns a Timer
+
+    Timer t2;    // This creates an object
+}
+```
+
+This example may be easy to spot but in more suble scenarios. Consider the
+following:
+
+```cpp
+std::ifstream file(std::string("data.txt"));
+```
+
+It looks like it is creating an object of type `std::ifstream` named `file`,
+initialized with a temporary `std::string` object. However, due to the vexing parse,
+the compiler interprets this as a function declaration for a function named
+`file` that takes a single parameter of type `std::string` and returns an `std::ifstream`.
+
+To avoid the vexing parse, you can use uniform initialization syntax (curly braces):
+
+```cpp
+std::ifstream file{std::string("data.txt")};
+```
 
 ### Spaceship operator
 
 C++ 20 introduced provides an operator called [spaceship operator](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0515r3.pdf) (`<=>`) that allows to write
 one function to take care of all comparison operations {% cite ISOCPP %}. This is useful when implementing custom types that need to be compared.
-The spaceship operator returns a value that indicates the result of the comparison, which can be one of five categories: 
+The spaceship operator returns a value that indicates the result of the comparison, which can be one of five categories:
 strong_ordering, weak_ordering, partial_ordering, strong_equality, or weak_equality. Let's start with an example before examing each of these:
 
 ```cpp
@@ -910,7 +948,7 @@ struct IntWrapper {
 }
 ```
 
-https://devblogs.microsoft.com/cppblog/simplify-your-code-with-rocket-science-c20s-spaceship-operator/
+https://devblogs.microsoft.com/cppblog/simplify-your-code-with-rocket-science-c20s-spaceship-operator
 
 ### Composable Range Views
 
