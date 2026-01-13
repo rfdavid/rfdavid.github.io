@@ -885,12 +885,11 @@ a generator for sequences of values.
 `co_return`: returns a final value and terminates the coroutine
 
 
-
 ## Template Metaprogramming
 
 ### SFINAE
 
-## Other
+SFINAE stands for "Substitution Failure Is Not An Error".
 
 ### C++ Vexing Parse
 
