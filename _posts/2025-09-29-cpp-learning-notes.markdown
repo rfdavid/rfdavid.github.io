@@ -999,6 +999,8 @@ is first passed to `std::views::split`, which creates a view that splits the str
 Then, the result is passed to `std::views::transform`, which applies a transformation function to
 each subrange produced by the split operation. The transformation function converts each subrange into a `std::string_view`.
 
+### Traits
+
 
 ## References
 
