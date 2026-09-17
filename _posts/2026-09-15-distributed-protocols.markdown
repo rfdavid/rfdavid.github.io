@@ -5,7 +5,7 @@ title:  "Distributed Protocols"
 date:   2026-09-15 00:27:00 -0400
 draft: true
 usemathjax: true
-published: true
+published: false
 categories: software engineering
 toc: true
 ---
