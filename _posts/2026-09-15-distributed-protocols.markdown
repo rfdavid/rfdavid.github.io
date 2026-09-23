@@ -5,7 +5,7 @@ title:  "Distributed Protocols"
 date:   2026-09-15 00:27:00 -0400
 draft: true
 usemathjax: true
-published: true
+published: false
 categories: software engineering
 toc: true
 ---
@@ -24,23 +24,25 @@ There is a great essay from Leslie Lamport named "Paxos Made Simple"
 {% cite lamport2001paxos %} which explains how the algorithm operates in two phases. Don't worry
 about understanding it now, we will have some background before and come back to these phases.
 
-**Phase 1.** (a) A proposer selects a proposal number n and sends a prepare
-request with number n to a majority of acceptors.
+**Phase 1.**
+> (a) A proposer selects a proposal number n and sends a prepare
+>request with number n to a majority of acceptors.
 
-(b) If an acceptor receives a prepare request with number n greater than
-that of any prepare request to which it has already responded, then it
-responds to the request with a promise not to accept any more proposals
-numbered less than n and with the highest-numbered proposal (if any) that it has accepted.
+> (b) If an acceptor receives a prepare request with number n greater than
+> that of any prepare request to which it has already responded, then it
+> responds to the request with a promise not to accept any more proposals
+> numbered less than n and with the highest-numbered proposal (if any) that it has accepted.
 
-**Phase 2.** (a) If the proposer receives a response to its prepare requests
-(numbered n) from a majority of acceptors, then it sends an accept request
-to each of those acceptors for a proposal numbered n wit value v, where v
-is the value of the highest-numbered proposal among the responses, or is
-any value if the responses reported no proposals.
+**Phase 2.** 
+> (a) If the proposer receives a response to its prepare requests
+> (numbered n) from a majority of acceptors, then it sends an accept request
+> to each of those acceptors for a proposal numbered n wit value v, where v
+> is the value of the highest-numbered proposal among the responses, or is
+> any value if the responses reported no proposals.
 
-(b) If an acceptor receives an accept request for a proposal numbered n,
-it accepts the proposal unless it has already responded to a prepare request
-having a number greater than n.
+> (b) If an acceptor receives an accept request for a proposal numbered n,
+> it accepts the proposal unless it has already responded to a prepare request
+> having a number greater than n.
 
 ## The three PALs: Proposers, Acceptors, and Learners
 
@@ -56,10 +58,55 @@ In simple words, we can describe in a very high level:
 ![large](/assets/images/paxos.png "Paxos Protocol")
 _Figure 1: Paxos Protocol._
 
+### Phase 1
+
+#### Phase 1a. Prepare
+
 Coming back to Lamport's explanation {% cite lamport2001paxos %}, in the first phase a proposer
-picks proposal `n` and sends a `Prepare(a)` message to a majority of acceptors.
-`n`must be unique across all proposers and greater than any number this
-proposer has used before.
+picks proposal `n` and sends a `Prepare(n)` message to a majority of acceptors.
+`n` must be unique across all proposers and greater than any number this
+proposer has used before. Numbers are also totally ordered, typically as a pair
+`(round, proposerId)` but varies from implementation.
+
+#### Phase 1b. Promise
+
+Once acceptors receive the message from the proposers, they either respond or
+reject. Depending on the implementation, acceptors can return a
+`NACK(currentHigherBallot)` or simply reject.
+
+An acceptors responds to a `Prepare(n)` if `n` is higher than the highest proposal
+number it has already seen. Then, it returns a `Promise(n, na, va)`
+where `na` and `va` means the previously accepted proposal, or empty if it has
+never accepted one. By replying, the acceptor also promises never to accept
+a proposal numbered lower than `n`.
+
+### Phase 2
+
+#### Phase 2a. Accept
+
+Once received the majority of promises for its request `n` from acceptors,
+then it sends an accept request to each of those acceptors `accept(n,v)` where
+`n` is the proposal number and `v` is the actual value. The proposer must take
+the value from the promise carrying the highest `na` among the promises
+received, which could also be from another proposer. Only if no acceptor
+reported a previously accepted proposal may it use its own value.
+
+#### Phase 2b. Accepted
+
+Once an acceptor receives an accept request `accept(n,v)`, it accepts the
+proposal unless it has already responded to a prepare request having a number
+greater than `n`. In a real system, this can cause preemption when having
+multiple proposal happening at the same time.
+
+Once a majority of acceptors have accepted the same `(n,v)`, the value `v` is
+chosen. Learners find out through the accepted messages.
+
+## Implementation in Cassandra
+
+Having the necessary background about Paxos, we analyze how paxos is actually
+implemented in a real system. Cassandra uses paxos to linearize transactions. This
+is called Lightweight Transactions (LWT).
+
 
 
 ## References
