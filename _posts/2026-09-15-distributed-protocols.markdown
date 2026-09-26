@@ -107,6 +107,12 @@ Having the necessary background about Paxos, we analyze how paxos is actually
 implemented in a real system. Cassandra uses paxos to linearize transactions. This
 is called Lightweight Transactions (LWT).
 
+TODO: What happens in a situation where you want to create a distributed lock,
+then a commit is local quorum or one, how does this affect paxos? how is it
+handled in cassandra?
+
+Perhaps go over a situation for a INSERT and possible scenarios. A visual
+diagram would be good to understand. 
 
 
 ## References
