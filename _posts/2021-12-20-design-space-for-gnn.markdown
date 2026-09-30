@@ -4,6 +4,7 @@ author: Rui F. David
 title:  "Paper review - Design Space for Graph Neural Networks"
 date:   2021-12-20 11:27:31 -0400
 usemathjax: true
+published: true
 categories: paper
 ---
 

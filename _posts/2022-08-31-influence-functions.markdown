@@ -4,6 +4,7 @@ author: Rui F. David
 title:  "Influence Functions in Machine Learning"
 date:   2022-08-31 09:00:00 -0400
 usemathjax: true
+published: true
 toc: true
 categories: paper
 ---

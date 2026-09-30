@@ -107,12 +107,36 @@ Having the necessary background about Paxos, we analyze how paxos is actually
 implemented in a real system. Cassandra uses paxos to linearize transactions. This
 is called Lightweight Transactions (LWT).
 
-TODO: What happens in a situation where you want to create a distributed lock,
-then a commit is local quorum or one, how does this affect paxos? how is it
-handled in cassandra?
+When there is a conditional mutation, LWT transaction happens using paxos
+coordination. Examples:
 
-Perhaps go over a situation for a INSERT and possible scenarios. A visual
-diagram would be good to understand. 
+{% highlight sql %}
+INSERT INTO lock (key, owner)
+VALUES ('XXX', '550e8400-e29b-41d4-a716-446655440000')
+IF NOT EXISTS;
+
+DELETE FROM lock
+WHERE key = 'XXX'
+IF owner = '550e8400-e29b-41d4-a716-446655440000';
+{% endhighlight %}
+
+The `IF` clause makes the mutations LWT/paxos operations.
+A Cassandra cluster can contain multiple datacenters (DCs). In Cassandra, this
+is configurable via consistency `SERIAL` (global across all datacenters) or
+`LOCAL_SERIAL` (within the same datacenter):
+
+{% highlight sql %}
+SERIAL CONSISTENCY SERIAL; -- Paxos will run across all DCs
+SERIAL CONSISTENCY LOCAL_SERIAL; -- Paxos will run only on coordinator's DC
+{% endhighlight %}
+
+## Paxos v1
+
+## Paxos v2
+
+## Accord
+
+## Multi-Paxos
 
 
 ## References

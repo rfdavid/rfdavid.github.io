@@ -5,6 +5,7 @@ title:  "C++ Random Learning Notes"
 date:   2025-10-15 00:27:00 -0400
 draft: true
 usemathjax: true
+published: true
 categories: software engineering
 toc: true
 ---
