@@ -138,7 +138,6 @@ SERIAL CONSISTENCY LOCAL_SERIAL; -- Paxos will run only on coordinator's DC
 
 ## Multi-Paxos
 
-
 ## References
 
 {% bibliography --cited %}
