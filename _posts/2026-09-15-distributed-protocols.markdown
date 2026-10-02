@@ -136,6 +136,35 @@ SERIAL CONSISTENCY LOCAL_SERIAL; -- Paxos will run only on coordinator's DC
 
 ## Accord
 
+The accord consensus protocol is also a leaderless protocol. Cassandra 6
+implements Accord.
+
+---
+
+EPaxos revisited:
+https://www.usenix.org/conference/nsdi21/presentation/tollman
+
+Draft Whitepaper for CEP-15:
+CEP-15: Fast General Purpose Transactions
+
+---
+What it takes from EPaxos:
+
+Any replica can coordinate a transaction. There's no stable leader.
+It has a fast path: one WAN round trip when there are no conflicts.
+It tracks dependencies between conflicting transactions.
+
+Where it departs (closer to Caesar and Tempo):
+
+Timestamp ordering. The coordinator proposes a timestamp, and replicas either accept it or propose a later one. Execution follows timestamp order, so you avoid EPaxos's dependency-graph cycles and the strongly-connected-component resolution needed to execute them.
+No livelock. EPaxos and Caesar can stall under contention. Accord's timestamp scheme guarantees progress.
+Flexible fast-path electorates. It can shrink the fast-path quorum when nodes are slow or down, so it keeps the fast path under partial failure. EPaxos degrades to the slow path in that case.
+Reorder buffer. It uses loosely synchronized clocks plus a small delay to keep the fast path likely across distant regions.
+Multi-shard transactions. It's built for general cross-partition transactions, not just a replicated log for a single state machine.
+
+
+
+
 ## Multi-Paxos
 
 ## References
