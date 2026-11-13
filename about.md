@@ -37,25 +37,24 @@ rui at rfdavid.com
 
 <h2>About me</h2>
 
-<p>
-I'm a software engineer who likes C++ and Systems / ML Systems.
-</p>
-<p>
-<p>I've been entrepreneur in the past and I founded two SaaS-based startups:</p>
-<p>
-<a href="https://www.linkedin.com/in/rfdavid/details/experience/42814042/multiple-media-viewer?profileId=ACoAAAGcYoIB1CmN6LlFTfS21ARCjkMHLE_wj2o&treasuryMediaId=50806083&type=DOCUMENT&lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_position_details%3BaxuYQkQTRsGlu%2FvYELdElw%3D%3D">Bolsa Financeira</a> - a SaaS platform for traders (acquired) 
-<br>
-<a href="https://exclusivecrm.com">Exclusive CRM</a> - a vertical CRM built from scratch</p>
- 
- <p>I also worked as CTO at <a href="https://www.crunchbase.com/organization/avante">Avante</a>, helping scale the company from seed to series B
-</p>
+<p>I'm a software engineer who likes storage and distributed systems: how data is stored, replicated and kept consistent. I mostly write C++. Right now I work at NetApp on StorageGRID, NetApp's object storage system.</p>
 
-<h2>Some Random Projects</h2>
+<p>Before that, I founded two SaaS startups:</p>
 <ul>
-  <li><a href="https://github.com/rfdavid/packed-memory-array">Packed Memory Array Lib</a> - A header-only STL-like C++ container of an optimized PMA implementation.</li>
-  <li><a href="https://github.com/rfdavid/coding-interview-handbook-cpp">Coding Interview Handbook</a> - A collection of problems and solutions for algorithm and data structure problems. </li>
-  <li><a href="https://github.com/rfdavid/neural-network-playground">Neural Network Playground</a> - A collection of different machine learning notebooks.</li>
-  <li><a href="https://github.com/rfdavid/montecarlo-simulator">Monte Carlo Simulation</a> - A implementation of financial monte carlo simulation for goal based investments in Golang.</li>
-  <li><a href="https://melhoresacoes.com">Melhores Ações</a> - A SaaS project in Ruby On Rails containing several fundamental analysis with a beautiful UI.</li>
+  <li><a href="https://www.linkedin.com/in/rfdavid/overlay/Position/42814042/treasury/?profileId=ACoAAAGcYoIB1CmN6LlFTfS21ARCjkMHLE_wj2o">Bolsa Financeira</a>: a platform for traders (acquired)</li>
+  <li><a href="https://exclusivecrm.com">Exclusive CRM</a>: a vertical CRM built from scratch</li>
+</ul>
+
+<p>I was also CTO at <a href="https://www.crunchbase.com/organization/avante">Avante</a>, where I helped the company grow from seed to Series B.</p>
+
+<p>After that, I took a break from startups to get back to what I really enjoy: digging into how systems work. So I went back to school, finished my Software Engineering degree, and started my Master's at the University of Waterloo.</p>
+
+<h2>Projects</h2>
+<ul>
+  <li><a href="https://github.com/rfdavid/packed-memory-array">Packed Memory Array Lib</a>: a header-only C++ container that keeps data sorted and cache-friendly.</li>
+  <li><a href="https://github.com/rfdavid/coding-interview-handbook-cpp">Coding Interview Handbook</a>: algorithm and data structure problems with solutions.</li>
+  <li><a href="https://github.com/rfdavid/neural-network-playground">Neural Network Playground</a>: machine learning notebooks.</li>
+  <li><a href="https://github.com/rfdavid/montecarlo-simulator">Monte Carlo Simulation</a>: a financial simulation for goal-based investing, in Go.</li>
+  <li><a href="https://melhoresacoes.com">Melhores Ações</a>: a Rails app for stock fundamental analysis.</li>
   <li><a href="https://github.com/rfdavid/rubocop-auto9">Vim RuboCop plugin</a></li>
 </ul>

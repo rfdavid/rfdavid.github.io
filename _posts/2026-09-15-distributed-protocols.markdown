@@ -132,12 +132,14 @@ SERIAL CONSISTENCY LOCAL_SERIAL; -- Paxos will run only on coordinator's DC
 
 ## Paxos v1
 
+
+
 ## Paxos v2
 
 ## Accord
 
 The accord consensus protocol is also a leaderless protocol. Cassandra 6
-implements Accord.
+implements Accord. However, LWT transactions are not yet implemented in Cassandra 6 via Accord.
 
 ---
 
